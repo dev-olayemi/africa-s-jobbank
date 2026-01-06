@@ -2,17 +2,29 @@ import type { Config } from "tailwindcss";
 
 export default {
   darkMode: ["class"],
-  content: ["./pages/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}", "./app/**/*.{ts,tsx}", "./src/**/*.{ts,tsx}"],
+  content: [
+    "./pages/**/*.{ts,tsx}",
+    "./components/**/*.{ts,tsx}",
+    "./app/**/*.{ts,tsx}",
+    "./src/**/*.{ts,tsx}",
+  ],
   prefix: "",
   theme: {
     container: {
       center: true,
-      padding: "2rem",
+      padding: "1rem",
       screens: {
+        sm: "640px",
+        md: "768px",
+        lg: "1024px",
+        xl: "1280px",
         "2xl": "1400px",
       },
     },
     extend: {
+      fontFamily: {
+        sans: ["Inter", "system-ui", "sans-serif"],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -47,6 +59,35 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        success: {
+          DEFAULT: "hsl(var(--success))",
+          foreground: "hsl(var(--success-foreground))",
+        },
+        warning: {
+          DEFAULT: "hsl(var(--warning))",
+          foreground: "hsl(var(--warning-foreground))",
+        },
+        info: {
+          DEFAULT: "hsl(var(--info))",
+          foreground: "hsl(var(--info-foreground))",
+        },
+        teal: {
+          DEFAULT: "hsl(var(--teal))",
+          light: "hsl(var(--teal-light))",
+          dark: "hsl(var(--teal-dark))",
+        },
+        orange: {
+          DEFAULT: "hsl(var(--orange))",
+          light: "hsl(var(--orange-light))",
+          dark: "hsl(var(--orange-dark))",
+        },
+        gold: {
+          DEFAULT: "hsl(var(--gold))",
+          light: "hsl(var(--gold-light))",
+          dark: "hsl(var(--gold-dark))",
+        },
+        terracotta: "hsl(var(--terracotta))",
+        earth: "hsl(var(--earth))",
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",
@@ -62,30 +103,108 @@ export default {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+        xl: "calc(var(--radius) + 4px)",
+        "2xl": "calc(var(--radius) + 8px)",
+      },
+      boxShadow: {
+        sm: "var(--shadow-sm)",
+        DEFAULT: "var(--shadow)",
+        md: "var(--shadow-md)",
+        lg: "var(--shadow-lg)",
+        glow: "var(--shadow-glow)",
       },
       keyframes: {
         "accordion-down": {
-          from: {
-            height: "0",
-          },
-          to: {
-            height: "var(--radix-accordion-content-height)",
-          },
+          from: { height: "0" },
+          to: { height: "var(--radix-accordion-content-height)" },
         },
         "accordion-up": {
-          from: {
-            height: "var(--radix-accordion-content-height)",
-          },
-          to: {
-            height: "0",
-          },
+          from: { height: "var(--radix-accordion-content-height)" },
+          to: { height: "0" },
+        },
+        shimmer: {
+          "100%": { transform: "translateX(100%)" },
+        },
+        "slide-in-bottom": {
+          "0%": { transform: "translateY(100%)", opacity: "0" },
+          "100%": { transform: "translateY(0)", opacity: "1" },
+        },
+        "slide-in-right": {
+          "0%": { transform: "translateX(100%)", opacity: "0" },
+          "100%": { transform: "translateX(0)", opacity: "1" },
+        },
+        bounce: {
+          "0%, 100%": { transform: "translateY(-5%)" },
+          "50%": { transform: "translateY(0)" },
         },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        shimmer: "shimmer 2s infinite",
+        "slide-in-bottom": "slide-in-bottom 0.3s ease-out",
+        "slide-in-right": "slide-in-right 0.3s ease-out",
+        bounce: "bounce 1s infinite",
+      },
+      backgroundImage: {
+        "gradient-hero": "var(--gradient-hero)",
+        "gradient-warm": "var(--gradient-warm)",
+        "gradient-card": "var(--gradient-card)",
       },
     },
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [require("tailwindcss-animate"), require("daisyui")],
+  daisyui: {
+    themes: [
+      {
+        jobfolio: {
+          primary: "#0d9488",
+          "primary-content": "#ffffff",
+          secondary: "#eab308",
+          "secondary-content": "#1a1a1a",
+          accent: "#f97316",
+          "accent-content": "#ffffff",
+          neutral: "#2a2a2a",
+          "neutral-content": "#fafafa",
+          "base-100": "#faf9f7",
+          "base-200": "#f0ebe5",
+          "base-300": "#e5dfd8",
+          "base-content": "#262118",
+          info: "#0ea5e9",
+          "info-content": "#ffffff",
+          success: "#16a34a",
+          "success-content": "#ffffff",
+          warning: "#f59e0b",
+          "warning-content": "#1a1a1a",
+          error: "#ef4444",
+          "error-content": "#ffffff",
+        },
+        jobfoliodark: {
+          primary: "#14b8a6",
+          "primary-content": "#1a1a1a",
+          secondary: "#facc15",
+          "secondary-content": "#1a1a1a",
+          accent: "#fb923c",
+          "accent-content": "#1a1a1a",
+          neutral: "#1f1f1f",
+          "neutral-content": "#fafafa",
+          "base-100": "#1a1714",
+          "base-200": "#252118",
+          "base-300": "#302a20",
+          "base-content": "#f5f0e8",
+          info: "#38bdf8",
+          "info-content": "#1a1a1a",
+          success: "#22c55e",
+          "success-content": "#1a1a1a",
+          warning: "#fbbf24",
+          "warning-content": "#1a1a1a",
+          error: "#f87171",
+          "error-content": "#1a1a1a",
+        },
+      },
+    ],
+    base: false,
+    styled: true,
+    utils: true,
+  },
 } satisfies Config;
