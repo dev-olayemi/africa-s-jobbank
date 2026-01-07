@@ -229,6 +229,32 @@
     color: hsl(var(--card-foreground));
     font-weight: 500;
   }
+
+  /* Global form controls (for auth pages and standalone forms) */
+  .input.input-bordered,
+  .select.select-bordered,
+  .textarea.textarea-bordered {
+    @apply bg-base-100 text-foreground border border-border rounded-md px-3 py-2;
+  }
+
+  /* Dark theme: use card palette for form controls so they blend with dark backgrounds */
+  .dark .input.input-bordered,
+  .dark .select.select-bordered,
+  .dark .textarea.textarea-bordered {
+    @apply bg-card text-card-foreground border border-border;
+  }
+
+  .input.input-bordered:focus,
+  .select.select-bordered:focus,
+  .textarea.textarea-bordered:focus {
+    @apply outline-none ring-2 ring-primary/40 border-primary;
+  }
+
+  .input.input-bordered::placeholder,
+  .textarea.textarea-bordered::placeholder {
+    color: hsl(var(--muted-foreground));
+    opacity: 0.95;
+  }
   
   /* Button animations */
   .btn-bounce {
