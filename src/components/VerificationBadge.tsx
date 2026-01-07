@@ -1,12 +1,12 @@
 import { BadgeCheck, Shield, Building2, Star } from "lucide-react";
 
 interface VerificationBadgeProps {
-  type: "verified" | "trusted" | "company" | "premium";
+  type?: "verified" | "trusted" | "company" | "premium";
   size?: "sm" | "md" | "lg";
   showLabel?: boolean;
 }
 
-const VerificationBadge = ({ type, size = "md", showLabel = false }: VerificationBadgeProps) => {
+const VerificationBadge = ({ type = "verified", size = "md", showLabel = false }: VerificationBadgeProps) => {
   const config = {
     verified: {
       icon: BadgeCheck,
