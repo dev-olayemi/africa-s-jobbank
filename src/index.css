@@ -231,29 +231,29 @@
   }
 
   /* Global form controls (for auth pages and standalone forms) */
+  /* Global form controls (auth pages + standalone) — use CSS variables so they follow theme reliably */
   .input.input-bordered,
   .select.select-bordered,
   .textarea.textarea-bordered {
-    @apply bg-base-100 text-foreground border border-border rounded-md px-3 py-2;
-  }
-
-  /* Dark theme: use card palette for form controls so they blend with dark backgrounds */
-  .dark .input.input-bordered,
-  .dark .select.select-bordered,
-  .dark .textarea.textarea-bordered {
-    @apply bg-card text-card-foreground border border-border;
+    background-color: hsl(var(--card));
+    color: hsl(var(--card-foreground));
+    border: 1px solid hsl(var(--border));
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.5rem;
   }
 
   .input.input-bordered:focus,
   .select.select-bordered:focus,
   .textarea.textarea-bordered:focus {
-    @apply outline-none ring-2 ring-primary/40 border-primary;
+    outline: none;
+    border-color: hsl(var(--primary));
+    box-shadow: 0 0 0 6px hsl(var(--ring) / 0.08);
   }
 
   .input.input-bordered::placeholder,
   .textarea.textarea-bordered::placeholder {
     color: hsl(var(--muted-foreground));
-    opacity: 0.95;
+    opacity: 0.9;
   }
   
   /* Button animations */
