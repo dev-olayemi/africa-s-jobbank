@@ -193,6 +193,25 @@
     @apply transition-all duration-300 hover:shadow-lg hover:-translate-y-1;
   }
 
+  /* Clean card style: no shadows, subtle borders, left accent on hover */
+  .card-clean {
+    background-color: hsl(var(--card));
+    color: hsl(var(--card-foreground));
+    border: 1px solid hsl(var(--border));
+    border-radius: 0.75rem;
+    transition: border-color 180ms ease, background-color 180ms ease, transform 180ms ease;
+    padding: 0; /* card-body handles inner padding */
+  }
+
+  .card-clean .card-body {
+    padding: 1.5rem;
+  }
+
+  .card-clean:hover {
+    border-color: hsl(var(--primary));
+    background-color: color-mix(in srgb, hsl(var(--card)) 92%, hsl(var(--primary)) 8%);
+  }
+
   /* Improve form controls inside cards: use muted background for contrast, visible borders, placeholders, focus */
   .card .card-body .input.input-bordered,
   .card .card-body .textarea.textarea-bordered,
