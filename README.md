@@ -1,73 +1,69 @@
-# Welcome to your Lovable project
+# JobBank — Private Repository
 
-## Project info
+IMPORTANT: This repository is a private, company-owned project. Do NOT clone, fork, or copy this repository or any of its contents unless you have explicit written permission from the project owner. Unauthorized duplication or distribution is strictly prohibited.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+**Project Owner:** dev-olayemi
 
-## How can I edit this code?
+**Purpose:** A production-grade job platform for Africa — internal, proprietary, and maintained by the core engineering team.
 
-There are several ways of editing your application.
+**If you do not have access:** Request access from the project owner or your manager. Do NOT attempt to bypass permissions.
 
-**Use Lovable**
+**Quick Summary**
+- **Status:** Private / Internal
+- **Tech stack:** Vite, React, TypeScript, Tailwind CSS, shadcn-ui
+- **Primary entry:** `src/main.tsx`
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+**Access & Policies**
+- Do not clone, fork, or mirror this repository to public or personal accounts.
+- Do not publish or share any repository contents externally.
+- Secrets and credentials must never be committed. Use your organization's secret manager or vault.
+- Local `.env` files must be added to `.gitignore` (we use `.env.local` for local overrides). If you find secrets in the repo, notify security and rotate them immediately.
 
-Changes made via Lovable will be committed automatically to this repo.
+Getting access
+- If you require access, contact the repository owner (`dev-olayemi`) or the team lead and request an invitation. Access will be granted via GitHub team membership or explicit invite.
 
-**Use your preferred IDE**
+Local development (for authorized contributors only)
+- Clone only if you've been explicitly invited.
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+```bash
+# Recommended (using bun if installed)
+bun install
+bun run dev
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Alternatively (npm)
+npm install
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+- Environment: Create a local environment file from the example and never commit it:
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+```bash
+cp .env.example .env.local
+# edit .env.local with your credentials
+```
 
-**Use GitHub Codespaces**
+Security & secrets
+- Never commit `.env`, keys, or private credentials. They should be stored in your team's secret manager.
+- We enforce `.gitignore` to exclude environment files. If you discover sensitive files already committed, inform the owner immediately so we can rotate credentials and remove them from history.
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+Committing and PRs
+- Use feature branches: `feature/<short-desc>` or `bugfix/<short-desc>`.
+- Open a pull request targeting `main` and request at least one reviewer from the core team.
+- Write clear PR descriptions and reference relevant issue IDs.
 
-## What technologies are used for this project?
+CI / Deployments
+- Deployments are handled by the ops team (Lovable or internal CI). Do not attempt to reconfigure deployment targets unless authorized.
 
-This project is built with:
+Repository hygiene & history
+- If secrets were previously committed, we will coordinate a history purge (git filter-repo or BFG) and a coordinated force-push. This action requires communication with all collaborators.
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+Support & contact
+- Repo owner / maintainer: GitHub: `dev-olayemi`
+- For security incidents: contact the security team and the project owner immediately.
 
-## How can I deploy this project?
+Legal & license
+- This codebase is proprietary and intended for internal use only. Do not redistribute or relicense without permission.
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+---
 
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+If you want additional sections (architecture overview, developer workflow, or onboarding checklist), tell me which sections to add and I will expand this README accordingly.
