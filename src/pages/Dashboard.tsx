@@ -9,6 +9,7 @@ import {
   Filter,
   Sparkles,
 } from "lucide-react";
+import { ShoppingCart, Home, Truck } from "lucide-react";
 import Layout from "@/components/Layout";
 import { JobCard, SocialPostCard } from "@/components/FeedCards";
 import VerificationBadge from "@/components/VerificationBadge";
@@ -23,7 +24,7 @@ const mockJobs = [
     salary: "₦80,000 - ₦120,000",
     posted: "2h ago",
     verified: true,
-    logo: "🛒",
+    logo: <ShoppingCart className="h-6 w-6" />,
     description: "Join our dynamic retail team and help customers find what they need.",
     tags: ["retail", "sales", "customer-service"],
     applicants: 45,
@@ -37,7 +38,7 @@ const mockJobs = [
     salary: "₦100,000 - ₦150,000",
     posted: "4h ago",
     verified: true,
-    logo: "🏨",
+    logo: <Home className="h-6 w-6" />,
     tags: ["hospitality", "front-desk"],
     applicants: 32,
   },
@@ -50,7 +51,7 @@ const mockJobs = [
     salary: "₦60,000 - ₦90,000",
     posted: "1d ago",
     verified: true,
-    logo: "🚴",
+    logo: <Truck className="h-6 w-6" />,
     tags: ["logistics", "delivery"],
     applicants: 78,
   },
@@ -65,7 +66,7 @@ const mockPosts = [
       avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face",
       verified: true,
     },
-    content: "We're hiring! 🎉 Looking for fresh graduates to join our customer service team. No experience needed - just passion and willingness to learn. DM me or apply through JobFolio!",
+    content: "We're hiring! Looking for fresh graduates to join our customer service team. No experience needed - just passion and willingness to learn. DM me or apply through JobFolio!",
     likes: 234,
     comments: 45,
     shares: 12,
@@ -80,7 +81,7 @@ const mockPosts = [
       avatar: "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=100&h=100&fit=crop&crop=face",
       verified: true,
     },
-    content: "5 things I wish I knew before my first job interview:\n\n1. Research the company (not just the role)\n2. Prepare 3 questions to ask THEM\n3. Arrive 15 mins early\n4. Bring extra copies of your CV\n5. Follow up with a thank you email\n\nWhat would you add? 👇",
+    content: "5 things I wish I knew before my first job interview:\n\n1. Research the company (not just the role)\n2. Prepare 3 questions to ask THEM\n3. Arrive 15 mins early\n4. Bring extra copies of your CV\n5. Follow up with a thank you email\n\nWhat would you add?",
     image: "https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=600&h=400&fit=crop",
     likes: 567,
     comments: 89,

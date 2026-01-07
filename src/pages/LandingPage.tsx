@@ -13,6 +13,7 @@ import {
   Clock,
   BadgeCheck,
 } from "lucide-react";
+import { ShoppingCart, Truck, Phone, Hospital, Book, Home } from "lucide-react";
 import Logo from "@/components/Logo";
 import ThemeToggle from "@/components/ThemeToggle";
 import VerificationBadge from "@/components/VerificationBadge";
@@ -26,12 +27,12 @@ const stats = [
 ];
 
 const categories = [
-  { name: "Retail & Sales", count: 2340, icon: "🛒", color: "from-orange to-orange-light" },
-  { name: "Hospitality", count: 1890, icon: "🏨", color: "from-primary to-teal-light" },
-  { name: "Logistics", count: 1560, icon: "🚚", color: "from-gold to-gold-light" },
-  { name: "Customer Service", count: 1230, icon: "📞", color: "from-info to-sky-400" },
-  { name: "Healthcare", count: 980, icon: "🏥", color: "from-success to-emerald-400" },
-  { name: "Education", count: 870, icon: "📚", color: "from-purple-500 to-purple-400" },
+  { name: "Retail & Sales", count: 2340, icon: ShoppingCart, color: "from-orange to-orange-light" },
+  { name: "Hospitality", count: 1890, icon: Home, color: "from-primary to-teal-light" },
+  { name: "Logistics", count: 1560, icon: Truck, color: "from-gold to-gold-light" },
+  { name: "Customer Service", count: 1230, icon: Phone, color: "from-info to-sky-400" },
+  { name: "Healthcare", count: 980, icon: Hospital, color: "from-success to-emerald-400" },
+  { name: "Education", count: 870, icon: Book, color: "from-purple-500 to-purple-400" },
 ];
 
 const featuredJobs = [
@@ -44,7 +45,7 @@ const featuredJobs = [
     salary: "₦80,000 - ₦120,000",
     posted: "2h ago",
     verified: true,
-    logo: "🛒",
+    logo: ShoppingCart,
   },
   {
     id: 2,
@@ -55,7 +56,7 @@ const featuredJobs = [
     salary: "₦100,000 - ₦150,000",
     posted: "4h ago",
     verified: true,
-    logo: "🏨",
+    logo: Home,
   },
   {
     id: 3,
@@ -66,7 +67,7 @@ const featuredJobs = [
     salary: "₦60,000 - ₦90,000",
     posted: "1d ago",
     verified: true,
-    logo: "🚴",
+    logo: Truck,
   },
 ];
 
@@ -261,8 +262,8 @@ const LandingPage = () => {
                 to={`/jobs?category=${category.name}`}
                 className="group p-6 bg-card rounded-xl border border-border hover:border-primary/50 hover:shadow-lg transition-all duration-300 text-center"
               >
-                <div className={`text-4xl mb-3 group-hover:scale-110 transition-transform`}>
-                  {category.icon}
+                <div className="mb-3">
+                  <category.icon className="h-8 w-8 mx-auto text-foreground group-hover:text-primary transition-colors" />
                 </div>
                 <h3 className="font-semibold text-sm mb-1 group-hover:text-primary transition-colors">
                   {category.name}
@@ -304,7 +305,7 @@ const LandingPage = () => {
               <div key={job.id} className="job-card group">
                 <div className="flex items-start gap-4">
                   <div className="w-14 h-14 rounded-xl bg-muted flex items-center justify-center text-2xl flex-shrink-0">
-                    {job.logo}
+                    <job.logo className="h-6 w-6 text-foreground" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
