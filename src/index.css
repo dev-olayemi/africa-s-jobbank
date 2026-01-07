@@ -192,6 +192,43 @@
   .card-hover {
     @apply transition-all duration-300 hover:shadow-lg hover:-translate-y-1;
   }
+
+  /* Improve form controls inside cards: use muted background for contrast, visible borders, placeholders, focus */
+  .card .card-body .input.input-bordered,
+  .card .card-body .textarea.textarea-bordered,
+  .card .card-body .select.select-bordered,
+  .card .card-body select {
+      @apply bg-card text-card-foreground border border-border rounded-md px-3 py-2;
+    }
+
+    .card .input:focus,
+    .card .textarea:focus,
+    .card select:focus,
+    .card .select:focus {
+      @apply outline-none ring-2 ring-primary/40 border-primary;
+  }
+
+  .card .card-body .input.input-bordered::placeholder,
+  .card .card-body .textarea.textarea-bordered::placeholder {
+    color: hsl(var(--muted-foreground));
+    opacity: 0.9;
+  }
+
+  .card .card-body .input.input-bordered:focus,
+  .card .card-body .textarea.textarea-bordered:focus,
+  .card .card-body .select.select-bordered:focus,
+  .card .card-body select:focus {
+      @apply outline-none ring-2 ring-primary/40 border-primary;
+  }
+
+  /* Ensure labels are block-level, use readable color in both themes */
+  .card .label,
+  .label {
+    display: block;
+    margin-bottom: 0.25rem;
+    color: hsl(var(--card-foreground));
+    font-weight: 500;
+  }
   
   /* Button animations */
   .btn-bounce {
