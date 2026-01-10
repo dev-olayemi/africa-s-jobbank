@@ -2,8 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import Layout from "@/components/Layout";
 import VerificationBadge from "@/components/VerificationBadge";
-import { NoApplications } from "@/components/EmptyStates";
-import { Clock, CheckCircle, XCircle, Eye, Filter } from "lucide-react";
+import { Clock, CheckCircle, XCircle, Eye, Briefcase } from "lucide-react";
 
 const mockApplications = [
   {
@@ -67,8 +66,8 @@ const ApplicationsPage = () => {
       <div className="max-w-3xl mx-auto px-4 py-6">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-bold">My Applications</h1>
-            <p className="text-base-content/70">Track your job applications</p>
+            <h1 className="text-2xl font-bold text-foreground">My Applications</h1>
+            <p className="text-muted-foreground">Track your job applications</p>
           </div>
           <select
             value={filter}
@@ -90,33 +89,31 @@ const ApplicationsPage = () => {
               const StatusIcon = status.icon;
 
               return (
-                <div key={app.id} className="card bg-base-100 shadow-sm">
-                  <div className="card-body p-4">
-                    <div className="flex items-center gap-4">
-                      <img
-                        src={app.companyLogo}
-                        alt={app.company}
-                        className="w-12 h-12 rounded-lg shrink-0"
-                      />
-                      <div className="flex-1 min-w-0">
-                        <Link
-                          to={`/jobs/${app.jobId}`}
-                          className="font-semibold hover:text-primary line-clamp-1"
-                        >
-                          {app.jobTitle}
-                        </Link>
-                        <div className="flex items-center gap-1 text-sm text-base-content/70">
-                          <span>{app.company}</span>
-                          {app.verified && <VerificationBadge size="sm" />}
-                        </div>
+                <div key={app.id} className="bg-card rounded-xl border border-border p-4">
+                  <div className="flex items-center gap-4">
+                    <img
+                      src={app.companyLogo}
+                      alt={app.company}
+                      className="w-12 h-12 rounded-lg shrink-0"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <Link
+                        to={`/jobs/${app.jobId}`}
+                        className="font-semibold text-foreground hover:text-primary line-clamp-1"
+                      >
+                        {app.jobTitle}
+                      </Link>
+                      <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                        <span>{app.company}</span>
+                        {app.verified && <VerificationBadge size="sm" />}
                       </div>
-                      <div className="text-right shrink-0">
-                        <span className={`badge ${status.className} gap-1`}>
-                          <StatusIcon className="w-3 h-3" />
-                          {status.label}
-                        </span>
-                        <p className="text-xs text-base-content/50 mt-1">{app.appliedDate}</p>
-                      </div>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <span className={`badge ${status.className} gap-1`}>
+                        <StatusIcon className="w-3 h-3" />
+                        {status.label}
+                      </span>
+                      <p className="text-xs text-muted-foreground mt-1">{app.appliedDate}</p>
                     </div>
                   </div>
                 </div>
@@ -124,7 +121,14 @@ const ApplicationsPage = () => {
             })}
           </div>
         ) : (
-          <NoApplications />
+          <div className="bg-card rounded-xl border border-border p-12 text-center">
+            <Briefcase className="h-16 w-16 text-muted-foreground/30 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-foreground mb-2">No applications yet</h3>
+            <p className="text-muted-foreground mb-4">Start applying to jobs to track them here</p>
+            <Link to="/jobs" className="btn btn-primary">
+              Browse Jobs
+            </Link>
+          </div>
         )}
       </div>
     </Layout>

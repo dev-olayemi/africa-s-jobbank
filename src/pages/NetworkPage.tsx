@@ -140,7 +140,6 @@ const NetworkPage = () => {
   const getDisplayList = () => {
     if (viewMode === "connections") return connections;
     if (viewMode === "suggestions") return suggestions;
-    // For followers/following, we'd need to fetch those lists
     return suggestions;
   };
 
@@ -162,137 +161,116 @@ const NetworkPage = () => {
 
   return (
     <Layout>
-      <div className="min-h-screen bg-base-200">
+      <div className="min-h-screen bg-background">
         <div className="container mx-auto px-4 py-8 max-w-7xl">
           {/* Header */}
           <div className="mb-8">
-            <h1 className="text-4xl font-bold mb-2">My Network</h1>
-            <p className="text-base-content/60 text-lg">
+            <h1 className="text-3xl font-bold text-foreground mb-2">My Network</h1>
+            <p className="text-muted-foreground">
               Connect with professionals across Africa
             </p>
           </div>
 
-          {/* Stats Cards - Clickable */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
             <button
               onClick={() => setViewMode("connections")}
-              className={`card bg-base-100 card-clean transition-all cursor-pointer border-2 ${
-                viewMode === "connections" ? "border-primary" : "border-transparent"
+              className={`bg-card rounded-xl border p-6 transition-all cursor-pointer ${
+                viewMode === "connections" ? "border-primary ring-2 ring-primary/20" : "border-border hover:border-primary/50"
               }`}
             >
-              <div className="card-body p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-4xl font-bold text-primary mb-1">
-                      {user?.connections?.length || 0}
-                    </p>
-                    <p className="text-base-content/70 font-medium">Connections</p>
-                  </div>
-                  <div className="p-4 bg-primary/10 rounded-2xl">
-                    <Users className="h-8 w-8 text-primary" />
-                  </div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-3xl font-bold text-primary mb-1">
+                    {user?.connections?.length || 0}
+                  </p>
+                  <p className="text-muted-foreground font-medium">Connections</p>
+                </div>
+                <div className="p-3 bg-primary/10 rounded-xl">
+                  <Users className="h-6 w-6 text-primary" />
                 </div>
               </div>
             </button>
 
             <button
               onClick={() => setViewMode("followers")}
-              className={`card bg-base-100 card-clean transition-all cursor-pointer border-2 ${
-                viewMode === "followers" ? "border-blue-500" : "border-transparent"
+              className={`bg-card rounded-xl border p-6 transition-all cursor-pointer ${
+                viewMode === "followers" ? "border-info ring-2 ring-info/20" : "border-border hover:border-info/50"
               }`}
             >
-              <div className="card-body p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-4xl font-bold text-blue-500 mb-1">
-                      {user?.followers?.length || 0}
-                    </p>
-                    <p className="text-base-content/70 font-medium">Followers</p>
-                  </div>
-                  <div className="p-4 bg-blue-500/10 rounded-2xl">
-                    <Users className="h-8 w-8 text-blue-500" />
-                  </div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-3xl font-bold text-info mb-1">
+                    {user?.followers?.length || 0}
+                  </p>
+                  <p className="text-muted-foreground font-medium">Followers</p>
+                </div>
+                <div className="p-3 bg-info/10 rounded-xl">
+                  <Users className="h-6 w-6 text-info" />
                 </div>
               </div>
             </button>
 
             <button
               onClick={() => setViewMode("following")}
-              className={`card bg-base-100 card-clean transition-all cursor-pointer border-2 ${
-                viewMode === "following" ? "border-green-500" : "border-transparent"
+              className={`bg-card rounded-xl border p-6 transition-all cursor-pointer ${
+                viewMode === "following" ? "border-success ring-2 ring-success/20" : "border-border hover:border-success/50"
               }`}
             >
-              <div className="card-body p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-4xl font-bold text-green-500 mb-1">
-                      {user?.following?.length || 0}
-                    </p>
-                    <p className="text-base-content/70 font-medium">Following</p>
-                  </div>
-                  <div className="p-4 bg-green-500/10 rounded-2xl">
-                    <UserPlus className="h-8 w-8 text-green-500" />
-                  </div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-3xl font-bold text-success mb-1">
+                    {user?.following?.length || 0}
+                  </p>
+                  <p className="text-muted-foreground font-medium">Following</p>
+                </div>
+                <div className="p-3 bg-success/10 rounded-xl">
+                  <UserPlus className="h-6 w-6 text-success" />
                 </div>
               </div>
             </button>
           </div>
 
           {/* View Mode Tabs */}
-          <div className="tabs tabs-boxed bg-base-100 mb-6 p-2 border border-base-300">
-            <button
-              onClick={() => setViewMode("suggestions")}
-              className={`tab tab-lg ${viewMode === "suggestions" ? "tab-active" : ""}`}
-            >
-              Suggestions
-            </button>
-            <button
-              onClick={() => setViewMode("connections")}
-              className={`tab tab-lg ${viewMode === "connections" ? "tab-active" : ""}`}
-            >
-              My Connections
-            </button>
-            <button
-              onClick={() => setViewMode("followers")}
-              className={`tab tab-lg ${viewMode === "followers" ? "tab-active" : ""}`}
-            >
-              Followers
-            </button>
-            <button
-              onClick={() => setViewMode("following")}
-              className={`tab tab-lg ${viewMode === "following" ? "tab-active" : ""}`}
-            >
-              Following
-            </button>
+          <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
+            {(["suggestions", "connections", "followers", "following"] as const).map((mode) => (
+              <button
+                key={mode}
+                onClick={() => setViewMode(mode)}
+                className={`btn btn-sm whitespace-nowrap ${viewMode === mode ? "btn-primary" : "btn-ghost"}`}
+              >
+                {mode === "suggestions" ? "Suggestions" : 
+                 mode === "connections" ? "My Connections" :
+                 mode === "followers" ? "Followers" : "Following"}
+              </button>
+            ))}
           </div>
 
           {/* Search Bar */}
-          <div className="card bg-base-100 card-clean mb-8">
-            <div className="card-body p-4">
-              <div className="relative">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-base-content/40" />
-                <input
-                  type="text"
-                  placeholder="Search people by name or role..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="input input-bordered w-full pl-12 input-lg"
-                />
-                {searchQuery && (
-                  <button
-                    onClick={() => setSearchQuery("")}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 btn btn-ghost btn-sm btn-circle"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                )}
-              </div>
+          <div className="bg-card rounded-xl border border-border p-4 mb-6">
+            <div className="relative">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+              <input
+                type="text"
+                placeholder="Search people by name or role..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="input input-bordered w-full pl-12"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 btn btn-ghost btn-sm btn-circle"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
             </div>
           </div>
 
           {/* Content */}
           <div>
-            <h2 className="text-2xl font-bold mb-6">
+            <h2 className="text-xl font-bold text-foreground mb-6">
               {viewMode === "suggestions" && "People You May Know"}
               {viewMode === "connections" && "Your Connections"}
               {viewMode === "followers" && "Your Followers"}
@@ -304,21 +282,19 @@ const NetworkPage = () => {
                 <Loader2 className="h-12 w-12 text-primary animate-spin" />
               </div>
             ) : filteredList.length === 0 ? (
-              <div className="card bg-base-100 card-clean">
-                <div className="card-body p-16 text-center">
-                  <Users className="h-24 w-24 text-base-content/20 mx-auto mb-6" />
-                  <h3 className="text-2xl font-bold mb-3">
-                    {searchQuery ? "No results found" : "No one here yet"}
-                  </h3>
-                  <p className="text-base-content/60 text-lg">
-                    {searchQuery 
-                      ? "Try a different search term"
-                      : viewMode === "suggestions"
-                      ? "Check back later for connection suggestions"
-                      : "Start connecting with people to see them here"
-                    }
-                  </p>
-                </div>
+              <div className="bg-card rounded-xl border border-border p-16 text-center">
+                <Users className="h-20 w-20 text-muted-foreground/30 mx-auto mb-6" />
+                <h3 className="text-xl font-bold text-foreground mb-3">
+                  {searchQuery ? "No results found" : "No one here yet"}
+                </h3>
+                <p className="text-muted-foreground">
+                  {searchQuery 
+                    ? "Try a different search term"
+                    : viewMode === "suggestions"
+                    ? "Check back later for connection suggestions"
+                    : "Start connecting with people to see them here"
+                  }
+                </p>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -330,43 +306,45 @@ const NetworkPage = () => {
                   return (
                     <div
                       key={person.id}
-                      className="card-clean"
+                      className="bg-card rounded-xl border border-border overflow-hidden hover:shadow-md transition-shadow"
                     >
-                      <div className="card-body p-6">
-                        {/* Profile Section - Clickable */}
+                      <div className="p-6">
+                        {/* Profile Section */}
                         <div 
                           className="flex flex-col items-center text-center mb-6 cursor-pointer group"
                           onClick={() => navigate(`/profile/${person.id}`)}
                         >
                           {person.profilePhoto ? (
-                            <div className="avatar mb-4">
-                              <div className="w-24 h-24 rounded-full ring-4 ring-primary ring-offset-base-100 ring-offset-2 group-hover:ring-offset-4 transition-all">
-                                <img src={person.profilePhoto} alt={person.fullName} />
-                              </div>
+                            <div className="mb-4">
+                              <img 
+                                src={person.profilePhoto} 
+                                alt={person.fullName}
+                                className="w-20 h-20 rounded-full ring-4 ring-primary ring-offset-2 ring-offset-card object-cover group-hover:ring-offset-4 transition-all"
+                              />
                             </div>
                           ) : (
-                            <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary via-secondary to-accent mb-4 flex items-center justify-center text-white text-3xl font-bold ring-4 ring-primary ring-offset-base-100 ring-offset-2 group-hover:ring-offset-4 transition-all">
+                            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary via-secondary to-accent mb-4 flex items-center justify-center text-white text-2xl font-bold ring-4 ring-primary ring-offset-2 ring-offset-card group-hover:ring-offset-4 transition-all">
                               {person.fullName?.charAt(0)?.toUpperCase() || "?"}
                             </div>
                           )}
                           
-                          <h3 className="font-bold text-xl mb-2 group-hover:text-primary transition-colors">
+                          <h3 className="font-bold text-lg text-foreground mb-1 group-hover:text-primary transition-colors">
                             {person.fullName}
                           </h3>
                           
-                          <p className="text-sm text-base-content/70 capitalize font-medium mb-2">
+                          <p className="text-sm text-muted-foreground capitalize font-medium mb-2">
                             {person.role}
                           </p>
                           
                           {person.location?.city && (
-                            <div className="flex items-center gap-1 text-xs text-base-content/60 mb-3">
+                            <div className="flex items-center gap-1 text-xs text-muted-foreground mb-3">
                               <MapPin className="h-3 w-3" />
                               <span>{person.location.city}, {person.location.country}</span>
                             </div>
                           )}
                           
                           {person.bio && (
-                            <p className="text-sm text-base-content/70 line-clamp-2">
+                            <p className="text-sm text-muted-foreground line-clamp-2">
                               {person.bio}
                             </p>
                           )}

@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import Layout from "@/components/Layout";
-import { NoNotifications } from "@/components/EmptyStates";
 import {
   Briefcase,
   Heart,
@@ -34,7 +33,7 @@ const mockNotifications = [
     id: "3",
     type: "comment",
     title: "Fatima Ibrahim commented",
-    message: "\"Congratulations! Well deserved.\"",
+    message: '"Congratulations! Well deserved."',
     time: "1 day ago",
     read: true,
     link: "/profile",
@@ -61,7 +60,7 @@ const mockNotifications = [
 
 const typeConfig = {
   job_alert: { icon: Briefcase, color: "text-primary" },
-  like: { icon: Heart, color: "text-error" },
+  like: { icon: Heart, color: "text-destructive" },
   comment: { icon: MessageSquare, color: "text-info" },
   follow: { icon: UserPlus, color: "text-success" },
   application: { icon: Bell, color: "text-warning" },
@@ -86,9 +85,9 @@ const NotificationsPage = () => {
       <div className="max-w-2xl mx-auto px-4 py-6">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-bold">Notifications</h1>
+            <h1 className="text-2xl font-bold text-foreground">Notifications</h1>
             {unreadCount > 0 && (
-              <p className="text-sm text-base-content/70">{unreadCount} unread</p>
+              <p className="text-sm text-muted-foreground">{unreadCount} unread</p>
             )}
           </div>
           {unreadCount > 0 && (
@@ -123,19 +122,19 @@ const NotificationsPage = () => {
                 <Link
                   key={notification.id}
                   to={notification.link}
-                  className={`flex gap-3 p-4 rounded-lg transition-colors ${
-                    notification.read ? "bg-base-100" : "bg-primary/5"
-                  } hover:bg-base-200`}
+                  className={`flex gap-3 p-4 rounded-xl transition-colors ${
+                    notification.read ? "bg-card" : "bg-primary/5"
+                  } hover:bg-muted border border-border`}
                 >
-                  <div className={`w-10 h-10 rounded-full bg-base-200 flex items-center justify-center shrink-0 ${config.color}`}>
+                  <div className={`w-10 h-10 rounded-full bg-muted flex items-center justify-center shrink-0 ${config.color}`}>
                     <Icon className="w-5 h-5" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className={`text-sm ${notification.read ? "" : "font-medium"}`}>
+                    <p className={`text-sm text-foreground ${notification.read ? "" : "font-medium"}`}>
                       {notification.title}
                     </p>
-                    <p className="text-sm text-base-content/60 line-clamp-1">{notification.message}</p>
-                    <p className="text-xs text-base-content/40 mt-1">{notification.time}</p>
+                    <p className="text-sm text-muted-foreground line-clamp-1">{notification.message}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{notification.time}</p>
                   </div>
                   {!notification.read && (
                     <div className="w-2 h-2 rounded-full bg-primary shrink-0 mt-2" />
@@ -145,7 +144,11 @@ const NotificationsPage = () => {
             })}
           </div>
         ) : (
-          <NoNotifications />
+          <div className="bg-card rounded-xl border border-border p-12 text-center">
+            <Bell className="h-16 w-16 text-muted-foreground/30 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-foreground mb-2">No notifications</h3>
+            <p className="text-muted-foreground">You're all caught up!</p>
+          </div>
         )}
       </div>
     </Layout>

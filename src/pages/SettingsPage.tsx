@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
 import { useTheme } from "@/components/ThemeProvider";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   User,
   Bell,
@@ -9,6 +10,7 @@ import {
   CreditCard,
   Moon,
   Sun,
+  Monitor,
   ChevronRight,
   LogOut,
   Trash2,
@@ -16,73 +18,91 @@ import {
 
 const SettingsPage = () => {
   const { theme, setTheme } = useTheme();
+  const { logout } = useAuth();
+  const navigate = useNavigate();
   const [notifications, setNotifications] = useState({
     jobAlerts: true,
     messages: true,
     marketing: false,
   });
 
+  const handleLogout = async () => {
+    await logout();
+    navigate("/login");
+  };
+
+  const themeOptions = [
+    { value: "light", label: "Light", icon: Sun },
+    { value: "dark", label: "Dark", icon: Moon },
+    { value: "system", label: "System", icon: Monitor },
+  ] as const;
+
   return (
     <Layout>
       <div className="max-w-2xl mx-auto px-4 py-6">
-        <h1 className="text-2xl font-bold mb-6">Settings</h1>
+        <h1 className="text-2xl font-bold text-foreground mb-6">Settings</h1>
 
         {/* Account Section */}
         <div className="mb-6">
-          <h2 className="text-sm font-semibold text-base-content/60 uppercase tracking-wide mb-3">Account</h2>
-          <div className="bg-base-100 rounded-xl shadow-sm divide-y divide-base-200">
-            <Link to="/profile/edit" className="flex items-center justify-between p-4 hover:bg-base-200/50 transition-colors">
+          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">Account</h2>
+          <div className="bg-card rounded-xl border border-border divide-y divide-border">
+            <Link to="/profile/edit" className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors">
               <div className="flex items-center gap-3">
                 <User className="w-5 h-5 text-primary" />
-                <span>Edit Profile</span>
+                <span className="text-foreground">Edit Profile</span>
               </div>
-              <ChevronRight className="w-5 h-5 text-base-content/40" />
+              <ChevronRight className="w-5 h-5 text-muted-foreground" />
             </Link>
-            <Link to="/subscribe" className="flex items-center justify-between p-4 hover:bg-base-200/50 transition-colors">
+            <Link to="/subscribe" className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors">
               <div className="flex items-center gap-3">
                 <CreditCard className="w-5 h-5 text-primary" />
                 <div>
-                  <span>Subscription</span>
-                  <p className="text-sm text-base-content/60">Free Trial - 2 days left</p>
+                  <span className="text-foreground">Subscription</span>
+                  <p className="text-sm text-muted-foreground">Free Trial - 2 days left</p>
                 </div>
               </div>
-              <ChevronRight className="w-5 h-5 text-base-content/40" />
+              <ChevronRight className="w-5 h-5 text-muted-foreground" />
             </Link>
           </div>
         </div>
 
         {/* Appearance Section */}
         <div className="mb-6">
-          <h2 className="text-sm font-semibold text-base-content/60 uppercase tracking-wide mb-3">Appearance</h2>
-          <div className="bg-base-100 rounded-xl shadow-sm p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                {theme === "dark" ? <Moon className="w-5 h-5 text-primary" /> : <Sun className="w-5 h-5 text-primary" />}
-                <span>Theme</span>
-              </div>
-              <select
-                value={theme}
-                onChange={(e) => setTheme(e.target.value as "light" | "dark" | "system")}
-                className="select select-bordered select-sm"
-              >
-                <option value="light">Light</option>
-                <option value="dark">Dark</option>
-                <option value="system">System</option>
-              </select>
+          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">Appearance</h2>
+          <div className="bg-card rounded-xl border border-border p-4">
+            <p className="text-sm text-foreground font-medium mb-3">Theme</p>
+            <div className="grid grid-cols-3 gap-2">
+              {themeOptions.map((option) => {
+                const Icon = option.icon;
+                return (
+                  <button
+                    key={option.value}
+                    onClick={() => setTheme(option.value)}
+                    className={`flex flex-col items-center gap-2 p-3 rounded-lg border transition-all ${
+                      theme === option.value
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-border text-muted-foreground hover:border-primary/50"
+                    }`}
+                  >
+                    <Icon className="w-5 h-5" />
+                    <span className="text-sm font-medium">{option.label}</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>
 
         {/* Notifications Section */}
         <div className="mb-6">
-          <h2 className="text-sm font-semibold text-base-content/60 uppercase tracking-wide mb-3">Notifications</h2>
-          <div className="bg-base-100 rounded-xl shadow-sm divide-y divide-base-200">
+          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">Notifications</h2>
+          <div className="bg-card rounded-xl border border-border divide-y divide-border">
             <div className="flex items-center justify-between p-4">
               <div className="flex items-center gap-3">
                 <Bell className="w-5 h-5 text-primary" />
                 <div>
-                  <span>Job Alerts</span>
-                  <p className="text-sm text-base-content/60">Get notified about matching jobs</p>
+                  <span className="text-foreground">Job Alerts</span>
+                  <p className="text-sm text-muted-foreground">Get notified about matching jobs</p>
                 </div>
               </div>
               <input
@@ -96,8 +116,8 @@ const SettingsPage = () => {
               <div className="flex items-center gap-3">
                 <Bell className="w-5 h-5 text-primary" />
                 <div>
-                  <span>Messages</span>
-                  <p className="text-sm text-base-content/60">New message notifications</p>
+                  <span className="text-foreground">Messages</span>
+                  <p className="text-sm text-muted-foreground">New message notifications</p>
                 </div>
               </div>
               <input
@@ -109,10 +129,10 @@ const SettingsPage = () => {
             </div>
             <div className="flex items-center justify-between p-4">
               <div className="flex items-center gap-3">
-                <Bell className="w-5 h-5 text-base-content/40" />
+                <Bell className="w-5 h-5 text-muted-foreground" />
                 <div>
-                  <span>Marketing</span>
-                  <p className="text-sm text-base-content/60">Tips and promotional content</p>
+                  <span className="text-foreground">Marketing</span>
+                  <p className="text-sm text-muted-foreground">Tips and promotional content</p>
                 </div>
               </div>
               <input
@@ -127,34 +147,37 @@ const SettingsPage = () => {
 
         {/* Privacy Section */}
         <div className="mb-6">
-          <h2 className="text-sm font-semibold text-base-content/60 uppercase tracking-wide mb-3">Privacy & Security</h2>
-          <div className="bg-base-100 rounded-xl shadow-sm divide-y divide-base-200">
-            <button className="w-full flex items-center justify-between p-4 hover:bg-base-200/50 transition-colors">
+          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">Privacy & Security</h2>
+          <div className="bg-card rounded-xl border border-border divide-y divide-border">
+            <button className="w-full flex items-center justify-between p-4 hover:bg-muted/50 transition-colors">
               <div className="flex items-center gap-3">
                 <Shield className="w-5 h-5 text-primary" />
-                <span>Privacy Settings</span>
+                <span className="text-foreground">Privacy Settings</span>
               </div>
-              <ChevronRight className="w-5 h-5 text-base-content/40" />
+              <ChevronRight className="w-5 h-5 text-muted-foreground" />
             </button>
-            <button className="w-full flex items-center justify-between p-4 hover:bg-base-200/50 transition-colors">
+            <button className="w-full flex items-center justify-between p-4 hover:bg-muted/50 transition-colors">
               <div className="flex items-center gap-3">
                 <Shield className="w-5 h-5 text-primary" />
-                <span>Change Password</span>
+                <span className="text-foreground">Change Password</span>
               </div>
-              <ChevronRight className="w-5 h-5 text-base-content/40" />
+              <ChevronRight className="w-5 h-5 text-muted-foreground" />
             </button>
           </div>
         </div>
 
         {/* Danger Zone */}
         <div>
-          <h2 className="text-sm font-semibold text-base-content/60 uppercase tracking-wide mb-3">Account Actions</h2>
-          <div className="bg-base-100 rounded-xl shadow-sm divide-y divide-base-200">
-            <button className="w-full flex items-center gap-3 p-4 text-warning hover:bg-base-200/50 transition-colors">
+          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">Account Actions</h2>
+          <div className="bg-card rounded-xl border border-border divide-y divide-border">
+            <button 
+              onClick={handleLogout}
+              className="w-full flex items-center gap-3 p-4 text-warning hover:bg-muted/50 transition-colors"
+            >
               <LogOut className="w-5 h-5" />
               <span>Log Out</span>
             </button>
-            <button className="w-full flex items-center gap-3 p-4 text-error hover:bg-base-200/50 transition-colors">
+            <button className="w-full flex items-center gap-3 p-4 text-destructive hover:bg-muted/50 transition-colors">
               <Trash2 className="w-5 h-5" />
               <span>Delete Account</span>
             </button>
