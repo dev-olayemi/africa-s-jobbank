@@ -93,14 +93,14 @@
   }
 
   .dark {
-    --primary: 172 70% 45%;
-    --primary-foreground: 0 0% 10%;
+    --primary: 172 70% 40%;
+    --primary-foreground: 0 0% 100%;
     
     --secondary: 45 93% 55%;
     --secondary-foreground: 0 0% 10%;
     
     --accent: 25 95% 58%;
-    --accent-foreground: 0 0% 10%;
+    --accent-foreground: 0 0% 100%;
     
     --background: 20 14% 10%;
     --foreground: 40 20% 95%;

@@ -130,12 +130,12 @@ const Navbar = () => {
             <ThemeToggle />
 
             {/* Notifications */}
-            <button className="btn btn-ghost btn-circle btn-sm relative">
+            <Link to="/notifications" className="btn btn-ghost btn-circle btn-sm relative">
               <Bell className="h-5 w-5" />
-              <span className="absolute top-0 right-0 h-4 w-4 bg-accent text-[10px] font-bold rounded-full flex items-center justify-center text-accent-foreground">
+              <span className="absolute top-0 right-0 h-4 w-4 bg-accent text-[10px] font-bold rounded-full flex items-center justify-center text-white">
                 3
               </span>
-            </button>
+            </Link>
 
             {/* Profile Dropdown */}
             <div className="dropdown dropdown-end">

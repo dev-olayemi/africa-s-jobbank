@@ -325,7 +325,7 @@ const SignUpPage = () => {
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="form-control">
                     <label className="label">
                       <span className="label-text font-medium">Password</span>
@@ -342,7 +342,7 @@ const SignUpPage = () => {
                   </div>
                   <div className="form-control">
                     <label className="label">
-                      <span className="label-text font-medium">Confirm</span>
+                      <span className="label-text font-medium">Confirm Password</span>
                     </label>
                     <input
                       type="password"
@@ -376,7 +376,7 @@ const SignUpPage = () => {
                       />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="form-control">
                         <label className="label">
                           <span className="label-text font-medium">Company Size</span>
@@ -420,7 +420,7 @@ const SignUpPage = () => {
                   <div className="space-y-4 pt-4 border-t border-border">
                     <p className="text-sm font-medium">Required Documents</p>
                     
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       {/* Photo Upload */}
                       <div className="form-control">
                         <label className="label">
