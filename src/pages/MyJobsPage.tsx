@@ -1,237 +1,341 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
-import Layout from "@/components/Layout";
-import { EmptyState } from "@/components/EmptyStates";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
+  Briefcase,
   Plus,
-  Users,
+  Eye,
   Edit,
   Trash2,
-  Eye,
-  MoreVertical,
-  Briefcase,
-  MapPin,
-  X,
+  Clock,
+  CheckCircle,
+  XCircle,
+  Loader2,
   FileText,
-  Download,
+  Calendar,
+  MapPin,
+  DollarSign,
 } from "lucide-react";
-
-const mockJobs = [
-  {
-    id: "1",
-    title: "Sales Representative",
-    location: "Lagos",
-    type: "Full-time",
-    posted: "Jan 3, 2026",
-    applicants: 23,
-    status: "active",
-    image: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=100",
-  },
-  {
-    id: "2",
-    title: "Store Manager",
-    location: "Abuja",
-    type: "Full-time",
-    posted: "Dec 28, 2025",
-    applicants: 15,
-    status: "active",
-    image: null,
-  },
-  {
-    id: "3",
-    title: "Customer Service Rep",
-    location: "Lagos",
-    type: "Part-time",
-    posted: "Dec 15, 2025",
-    applicants: 8,
-    status: "closed",
-    image: null,
-  },
-];
-
-const mockApplicants = [
-  {
-    id: "1",
-    name: "Adaeze Okonkwo",
-    avatar: "https://ui-avatars.com/api/?name=AO&background=0D9488&color=fff",
-    location: "Lagos",
-    appliedDate: "Jan 5, 2026",
-    hasCV: true,
-  },
-  {
-    id: "2",
-    name: "Emeka Johnson",
-    avatar: "https://ui-avatars.com/api/?name=EJ&background=F97316&color=fff",
-    location: "Abuja",
-    appliedDate: "Jan 4, 2026",
-    hasCV: true,
-  },
-  {
-    id: "3",
-    name: "Fatima Ibrahim",
-    avatar: "https://ui-avatars.com/api/?name=FI&background=EAB308&color=fff",
-    location: "Kano",
-    appliedDate: "Jan 3, 2026",
-    hasCV: false,
-  },
-];
+import Layout from "@/components/Layout";
+import { api } from "@/lib/api";
+import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 
 const MyJobsPage = () => {
-  const [showApplicantsModal, setShowApplicantsModal] = useState(false);
-  const [selectedJob, setSelectedJob] = useState<typeof mockJobs[0] | null>(null);
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState<"posted" | "applied">("posted");
+  const [postedJobs, setPostedJobs] = useState<any[]>([]);
+  const [applications, setApplications] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const openApplicants = (job: typeof mockJobs[0]) => {
-    setSelectedJob(job);
-    setShowApplicantsModal(true);
+  const canPostJobs = user?.role === 'agent' || user?.role === 'business' || user?.role === 'company';
+  const isJobSeeker = user?.role === 'seeker';
+
+  useEffect(() => {
+    // Set default tab based on user role
+    if (isJobSeeker) {
+      setActiveTab("applied");
+    }
+    fetchData();
+  }, [user]);
+
+  const fetchData = async () => {
+    try {
+      setIsLoading(true);
+
+      if (canPostJobs) {
+        // Fetch posted jobs
+        const jobsResponse = await api.getMyPostedJobs();
+        if (jobsResponse.success && jobsResponse.data) {
+          setPostedJobs(jobsResponse.data.jobs || []);
+        }
+      }
+
+      // Fetch applications
+      const appsResponse = await api.getApplications();
+      if (appsResponse.success && appsResponse.data) {
+        setApplications(appsResponse.data.applications || []);
+      }
+    } catch (error: any) {
+      toast.error(error.message || "Failed to load data");
+    } finally {
+      setIsLoading(false);
+    }
   };
+
+  const handleDeleteJob = async (jobId: string) => {
+    if (!confirm("Are you sure you want to delete this job posting?")) return;
+
+    try {
+      const response = await api.deleteJob(jobId);
+      if (response.success) {
+        toast.success("Job deleted successfully");
+        setPostedJobs(postedJobs.filter(job => job._id !== jobId));
+      }
+    } catch (error: any) {
+      toast.error(error.message || "Failed to delete job");
+    }
+  };
+
+  const getStatusBadge = (status: string) => {
+    const badges = {
+      pending: { class: "badge-warning", icon: Clock, text: "Pending" },
+      reviewing: { class: "badge-info", icon: Eye, text: "Reviewing" },
+      accepted: { class: "badge-success", icon: CheckCircle, text: "Accepted" },
+      rejected: { class: "badge-error", icon: XCircle, text: "Rejected" },
+    };
+
+    const badge = badges[status as keyof typeof badges] || badges.pending;
+    const Icon = badge.icon;
+
+    return (
+      <div className={`badge ${badge.class} gap-1`}>
+        <Icon className="h-3 w-3" />
+        {badge.text}
+      </div>
+    );
+  };
+
+  const formatDate = (date: string) => {
+    return new Date(date).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
+
+  if (isLoading) {
+    return (
+      <Layout>
+        <div className="flex justify-center items-center min-h-[60vh]">
+          <Loader2 className="h-12 w-12 text-primary animate-spin" />
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
-      <div className="max-w-4xl mx-auto px-4 py-6">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-2xl font-bold">My Posted Jobs</h1>
-            <p className="text-base-content/70">Manage your job listings</p>
+      <div className="min-h-screen bg-base-200 py-8">
+        <div className="container mx-auto px-4 max-w-7xl">
+          {/* Header */}
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h1 className="text-4xl font-bold mb-2">My Jobs</h1>
+              <p className="text-base-content/60">
+                {canPostJobs 
+                  ? "Manage your job postings and applications"
+                  : "Track your job applications"
+                }
+              </p>
+            </div>
+            {canPostJobs && (
+              <button
+                onClick={() => navigate("/create/job")}
+                className="btn btn-primary gap-2"
+              >
+                <Plus className="h-5 w-5" />
+                Post New Job
+              </button>
+            )}
           </div>
-          <Link to="/jobs/create" className="btn btn-primary gap-2">
-            <Plus className="w-4 h-4" />
-            Post Job
-          </Link>
-        </div>
 
-        {mockJobs.length > 0 ? (
-          <div className="space-y-4">
-            {mockJobs.map((job) => (
-              <div key={job.id} className="card bg-base-100 shadow-sm">
-                <div className="card-body p-4">
-                  <div className="flex gap-4">
-                    {/* Thumbnail */}
-                    <div className="w-16 h-16 rounded-lg bg-base-200 shrink-0 overflow-hidden">
-                      {job.image ? (
-                        <img src={job.image} alt="" className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <Briefcase className="w-6 h-6 text-base-content/30" />
-                        </div>
-                      )}
-                    </div>
+          {/* Tabs */}
+          <div className="tabs tabs-boxed bg-base-100 shadow-lg mb-6 p-2">
+            {canPostJobs && (
+              <button
+                onClick={() => setActiveTab("posted")}
+                className={`tab tab-lg ${activeTab === "posted" ? "tab-active" : ""}`}
+              >
+                <Briefcase className="h-4 w-4 mr-2" />
+                Posted Jobs ({postedJobs.length})
+              </button>
+            )}
+            <button
+              onClick={() => setActiveTab("applied")}
+              className={`tab tab-lg ${activeTab === "applied" ? "tab-active" : ""}`}
+            >
+              <FileText className="h-4 w-4 mr-2" />
+              Applications ({applications.length})
+            </button>
+          </div>
 
-                    {/* Info */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-2">
-                        <div>
-                          <h3 className="font-semibold">{job.title}</h3>
-                          <div className="flex items-center gap-3 text-sm text-base-content/60 mt-1">
-                            <span className="flex items-center gap-1">
-                              <MapPin className="w-3 h-3" />
-                              {job.location}
-                            </span>
-                            <span>{job.type}</span>
+          {/* Content */}
+          {activeTab === "posted" && canPostJobs ? (
+            <div className="space-y-4">
+              {postedJobs.length === 0 ? (
+                <div className="card bg-base-100 shadow-lg border border-base-300">
+                  <div className="card-body p-16 text-center">
+                    <Briefcase className="h-20 w-20 text-base-content/20 mx-auto mb-6" />
+                    <h3 className="text-2xl font-bold mb-3">No jobs posted yet</h3>
+                    <p className="text-base-content/60 mb-6">
+                      Start hiring talented professionals by posting your first job
+                    </p>
+                    <button
+                      onClick={() => navigate("/create/job")}
+                      className="btn btn-primary gap-2 mx-auto"
+                    >
+                      <Plus className="h-5 w-5" />
+                      Post Your First Job
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                postedJobs.map((job) => (
+                  <div
+                    key={job._id}
+                    className="card bg-base-100 shadow-lg border border-base-300 hover:shadow-xl transition-shadow"
+                  >
+                    <div className="card-body p-6">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-start gap-4">
+                            <div className="flex-1">
+                              <h3 className="text-xl font-bold mb-2">{job.title}</h3>
+                              <div className="flex flex-wrap gap-3 text-sm text-base-content/70 mb-3">
+                                <span className="flex items-center gap-1">
+                                  <MapPin className="h-4 w-4" />
+                                  {job.location?.city}, {job.location?.state}
+                                </span>
+                                <span className="flex items-center gap-1">
+                                  <Briefcase className="h-4 w-4" />
+                                  {job.type}
+                                </span>
+                                {job.salary && (
+                                  <span className="flex items-center gap-1">
+                                    <DollarSign className="h-4 w-4" />
+                                    {job.salary.currency} {job.salary.min?.toLocaleString()} - {job.salary.max?.toLocaleString()}
+                                  </span>
+                                )}
+                                <span className="flex items-center gap-1">
+                                  <Calendar className="h-4 w-4" />
+                                  Posted {formatDate(job.createdAt)}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-3">
+                                <div className={`badge ${job.status === 'active' ? 'badge-success' : 'badge-error'}`}>
+                                  {job.status}
+                                </div>
+                                <span className="text-sm text-base-content/60">
+                                  {job.views || 0} views
+                                </span>
+                                <span className="text-sm text-base-content/60">
+                                  {job.applications?.length || 0} applications
+                                </span>
+                              </div>
+                            </div>
                           </div>
                         </div>
+
+                        {/* Actions */}
                         <div className="dropdown dropdown-end">
-                          <label tabIndex={0} className="btn btn-ghost btn-sm btn-circle">
-                            <MoreVertical className="w-4 h-4" />
-                          </label>
-                          <ul tabIndex={0} className="dropdown-content z-10 menu p-2 shadow bg-base-100 rounded-box w-40">
+                          <button tabIndex={0} className="btn btn-ghost btn-sm btn-circle">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="w-5 h-5 stroke-current">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                            </svg>
+                          </button>
+                          <ul tabIndex={0} className="dropdown-content menu menu-sm bg-base-100 rounded-xl shadow-lg w-52 p-2 border border-base-300 z-10">
                             <li>
-                              <Link to={`/jobs/${job.id}`}>
-                                <Eye className="w-4 h-4" /> View
-                              </Link>
-                            </li>
-                            <li>
-                              <button>
-                                <Edit className="w-4 h-4" /> Edit
+                              <button onClick={() => navigate(`/jobs/${job._id}`)} className="flex items-center gap-2">
+                                <Eye className="h-4 w-4" />
+                                View Job
                               </button>
                             </li>
                             <li>
-                              <button className="text-error">
-                                <Trash2 className="w-4 h-4" /> Delete
+                              <button onClick={() => navigate(`/jobs/${job._id}/edit`)} className="flex items-center gap-2">
+                                <Edit className="h-4 w-4" />
+                                Edit Job
+                              </button>
+                            </li>
+                            <li>
+                              <button className="flex items-center gap-2">
+                                <FileText className="h-4 w-4" />
+                                View Applications ({job.applications?.length || 0})
+                              </button>
+                            </li>
+                            <div className="divider my-1"></div>
+                            <li>
+                              <button
+                                onClick={() => handleDeleteJob(job._id)}
+                                className="flex items-center gap-2 text-error"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                                Delete Job
                               </button>
                             </li>
                           </ul>
                         </div>
                       </div>
-
-                      <div className="flex items-center justify-between mt-3">
-                        <div className="flex items-center gap-3">
-                          <span className={`badge ${job.status === "active" ? "badge-success" : "badge-ghost"} badge-sm`}>
-                            {job.status === "active" ? "Active" : "Closed"}
-                          </span>
-                          <span className="text-xs text-base-content/50">Posted {job.posted}</span>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {applications.length === 0 ? (
+                <div className="card bg-base-100 shadow-lg border border-base-300">
+                  <div className="card-body p-16 text-center">
+                    <FileText className="h-20 w-20 text-base-content/20 mx-auto mb-6" />
+                    <h3 className="text-2xl font-bold mb-3">No applications yet</h3>
+                    <p className="text-base-content/60 mb-6">
+                      Start applying to jobs and track your applications here
+                    </p>
+                    <button
+                      onClick={() => navigate("/jobs")}
+                      className="btn btn-primary gap-2 mx-auto"
+                    >
+                      <Briefcase className="h-5 w-5" />
+                      Browse Jobs
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                applications.map((app) => (
+                  <div
+                    key={app._id}
+                    className="card bg-base-100 shadow-lg border border-base-300 hover:shadow-xl transition-shadow"
+                  >
+                    <div className="card-body p-6">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
+                            <h3 className="text-xl font-bold">{app.job?.title}</h3>
+                            {getStatusBadge(app.status)}
+                          </div>
+                          <p className="text-base-content/70 mb-3">
+                            {app.job?.company || app.job?.postedBy?.companyName || "Company"}
+                          </p>
+                          <div className="flex flex-wrap gap-3 text-sm text-base-content/60">
+                            <span className="flex items-center gap-1">
+                              <Calendar className="h-4 w-4" />
+                              Applied {formatDate(app.createdAt)}
+                            </span>
+                            {app.job?.location && (
+                              <span className="flex items-center gap-1">
+                                <MapPin className="h-4 w-4" />
+                                {app.job.location.city}, {app.job.location.state}
+                              </span>
+                            )}
+                          </div>
                         </div>
+
                         <button
-                          onClick={() => openApplicants(job)}
-                          className="btn btn-ghost btn-sm gap-1"
+                          onClick={() => navigate(`/jobs/${app.job?._id}`)}
+                          className="btn btn-ghost btn-sm gap-2"
                         >
-                          <Users className="w-4 h-4" />
-                          {job.applicants} Applicants
+                          <Eye className="h-4 w-4" />
+                          View Job
                         </button>
                       </div>
                     </div>
                   </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <EmptyState
-            icon={<Briefcase className="w-8 h-8 text-primary" />}
-            title="No jobs posted yet"
-            description="Create your first job listing to start receiving applications."
-            action={
-              <Link to="/jobs/create" className="btn btn-primary gap-2">
-                <Plus className="w-4 h-4" />
-                Post Your First Job
-              </Link>
-            }
-          />
-        )}
-      </div>
-
-      {/* Applicants Modal */}
-      {showApplicantsModal && selectedJob && (
-        <div className="modal modal-open">
-          <div className="modal-box max-w-lg">
-            <button
-              onClick={() => setShowApplicantsModal(false)}
-              className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
-            >
-              <X className="w-4 h-4" />
-            </button>
-            <h3 className="font-bold text-lg">Applicants for {selectedJob.title}</h3>
-            <p className="text-sm text-base-content/60 mb-4">{mockApplicants.length} applications</p>
-
-            <div className="space-y-3 max-h-80 overflow-y-auto">
-              {mockApplicants.map((applicant) => (
-                <div key={applicant.id} className="flex items-center gap-3 p-3 bg-base-200/50 rounded-lg">
-                  <img
-                    src={applicant.avatar}
-                    alt={applicant.name}
-                    className="w-10 h-10 rounded-full"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm">{applicant.name}</p>
-                    <p className="text-xs text-base-content/60">{applicant.location}</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {applicant.hasCV && (
-                      <button className="btn btn-ghost btn-xs gap-1">
-                        <FileText className="w-3 h-3" />
-                        CV
-                      </button>
-                    )}
-                    <Link to={`/profile/${applicant.id}`} className="btn btn-primary btn-xs">
-                      View
-                    </Link>
-                  </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
-          </div>
-          <div className="modal-backdrop" onClick={() => setShowApplicantsModal(false)} />
+          )}
         </div>
-      )}
+      </div>
     </Layout>
   );
 };

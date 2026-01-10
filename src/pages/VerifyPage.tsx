@@ -3,13 +3,25 @@ import { Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, CheckCircle2, RefreshCw } from "lucide-react";
 import Logo from "@/components/Logo";
 import ThemeToggle from "@/components/ThemeToggle";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 const VerifyPage = () => {
   const navigate = useNavigate();
+  const { user, verifyEmail, resendVerification, isAuthenticated } = useAuth();
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [isResending, setIsResending] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
   const [countdown, setCountdown] = useState(60);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+
+  // Redirect if not authenticated
+  useEffect(() => {
+    if (!isAuthenticated) {
+      toast.error("Please sign up first");
+      navigate("/signup");
+    }
+  }, [isAuthenticated, navigate]);
 
   useEffect(() => {
     if (countdown > 0) {
@@ -44,19 +56,40 @@ const VerifyPage = () => {
     }
   };
 
-  const handleVerify = (code: string) => {
-    // Would verify code with backend
-    console.log("Verifying:", code);
-    navigate("/dashboard");
+  const handleVerify = async (code: string) => {
+    if (code.length !== 6) {
+      toast.error("Please enter a 6-digit code");
+      return;
+    }
+
+    try {
+      setIsVerifying(true);
+      await verifyEmail(code);
+      toast.success("Email verified successfully!");
+      navigate("/dashboard");
+    } catch (error: any) {
+      console.error("Verification error:", error);
+      // Error is already handled in auth context
+      // Clear OTP on error
+      setOtp(["", "", "", "", "", ""]);
+      inputRefs.current[0]?.focus();
+    } finally {
+      setIsVerifying(false);
+    }
   };
 
-  const handleResend = () => {
-    setIsResending(true);
-    // Would resend OTP
-    setTimeout(() => {
-      setIsResending(false);
+  const handleResend = async () => {
+    try {
+      setIsResending(true);
+      await resendVerification();
       setCountdown(60);
-    }, 1000);
+      setOtp(["", "", "", "", "", ""]);
+      inputRefs.current[0]?.focus();
+    } catch (error) {
+      console.error("Resend error:", error);
+    } finally {
+      setIsResending(false);
+    }
   };
 
   return (
@@ -87,7 +120,9 @@ const VerifyPage = () => {
           </h1>
           <p className="text-muted-foreground mb-8">
             We sent a 6-digit code to{" "}
-            <span className="font-medium text-foreground">+234 800 XXX XXXX</span>
+            <span className="font-medium text-foreground">
+              {user?.email || "your email"}
+            </span>
           </p>
 
           {/* OTP Input */}
@@ -102,17 +137,29 @@ const VerifyPage = () => {
                 value={digit}
                 onChange={(e) => handleChange(index, e.target.value)}
                 onKeyDown={(e) => handleKeyDown(index, e)}
-                className="w-12 h-14 md:w-14 md:h-16 text-center text-xl font-bold input input-bordered focus:border-primary focus:ring-2 focus:ring-primary/50"
+                className="w-12 h-14 md:w-14 md:h-16 text-center text-xl font-bold bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 rounded-lg focus:border-primary focus:ring-2 focus:ring-primary/50 focus:outline-none text-foreground transition-all"
+                style={{
+                  backgroundColor: 'hsl(var(--card))',
+                  color: 'hsl(var(--foreground))',
+                  borderColor: 'hsl(var(--border))'
+                }}
               />
             ))}
           </div>
 
           <button
             onClick={() => handleVerify(otp.join(""))}
-            disabled={otp.some((digit) => !digit)}
+            disabled={otp.some((digit) => !digit) || isVerifying}
             className="btn btn-primary w-full mb-4"
           >
-            Verify & Continue
+            {isVerifying ? (
+              <>
+                <span className="loading loading-spinner loading-sm"></span>
+                Verifying...
+              </>
+            ) : (
+              "Verify & Continue"
+            )}
           </button>
 
           <p className="text-sm text-muted-foreground">

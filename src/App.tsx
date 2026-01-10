@@ -12,11 +12,15 @@ import VerifyPage from "./pages/VerifyPage";
 import Dashboard from "./pages/Dashboard";
 import ProfilePage from "./pages/ProfilePage";
 import ProfileEditPage from "./pages/ProfileEditPage";
+import UserProfilePage from "./pages/UserProfilePage";
 import JobsPage from "./pages/JobsPage";
+import JobDetailPage from "./pages/JobDetailPage";
+import MyJobsPage from "./pages/MyJobsPage";
 import NetworkPage from "./pages/NetworkPage";
 import MessagesPage from "./pages/MessagesPage";
 import SettingsPage from "./pages/SettingsPage";
 import CreateJobPage from "./pages/CreateJobPage";
+import CreatePostPage from "./pages/CreatePostPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -37,11 +41,16 @@ const App = () => (
               <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
               <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
               <Route path="/profile/edit" element={<ProtectedRoute><ProfileEditPage /></ProtectedRoute>} />
+              <Route path="/profile/:userId" element={<ProtectedRoute><UserProfilePage /></ProtectedRoute>} />
               <Route path="/jobs" element={<ProtectedRoute><JobsPage /></ProtectedRoute>} />
+              <Route path="/jobs/:id" element={<ProtectedRoute><JobDetailPage /></ProtectedRoute>} />
+              <Route path="/my-jobs" element={<ProtectedRoute><MyJobsPage /></ProtectedRoute>} />
               <Route path="/network" element={<ProtectedRoute><NetworkPage /></ProtectedRoute>} />
               <Route path="/messages" element={<ProtectedRoute><MessagesPage /></ProtectedRoute>} />
               <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
-              <Route path="/create" element={<ProtectedRoute><CreateJobPage /></ProtectedRoute>} />
+              <Route path="/create/job" element={<ProtectedRoute><CreateJobPage /></ProtectedRoute>} />
+              <Route path="/create/post" element={<ProtectedRoute><CreatePostPage /></ProtectedRoute>} />
+              <Route path="/create" element={<ProtectedRoute><CreatePostPage /></ProtectedRoute>} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </AuthProvider>

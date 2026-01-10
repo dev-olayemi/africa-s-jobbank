@@ -21,6 +21,32 @@ interface JobCardProps {
 }
 
 const JobCard = ({ job, variant = "compact" }: JobCardProps) => {
+  const formatLocation = (loc: any) => {
+    if (!loc) return "";
+    if (typeof loc === "string") return loc;
+    const parts: string[] = [];
+    if (loc.city) parts.push(loc.city);
+    if (loc.state) parts.push(loc.state);
+    if (loc.country) parts.push(loc.country);
+    if (loc.isRemote) parts.push("Remote");
+    return parts.join(", ");
+  };
+
+  const formatSalary = (sal: any) => {
+    if (!sal) return "";
+    if (typeof sal === "string") return sal;
+    // sal may be { min, max, currency, period, negotiable }
+    const parts: string[] = [];
+    if (sal.min != null && sal.max != null) {
+      const currency = sal.currency || "";
+      parts.push(`${currency}${sal.min.toLocaleString()} - ${currency}${sal.max.toLocaleString()}`);
+    } else if (sal.min != null) {
+      parts.push(`${sal.min}`);
+    }
+    if (sal.period) parts.push(`/${sal.period}`);
+    if (sal.negotiable) parts.push("(negotiable)");
+    return parts.join(" ");
+  };
   return (
     <div className="job-card group">
       <div className="flex items-start gap-4">
@@ -49,7 +75,7 @@ const JobCard = ({ job, variant = "compact" }: JobCardProps) => {
           <div className="flex flex-wrap gap-2 mt-2 text-xs text-muted-foreground">
             <span className="flex items-center gap-1">
               <MapPin className="h-3 w-3" />
-              {job.location}
+              {formatLocation(job.location)}
             </span>
             <span className="flex items-center gap-1">
               <Clock className="h-3 w-3" />
@@ -78,7 +104,7 @@ const JobCard = ({ job, variant = "compact" }: JobCardProps) => {
 
       <div className="mt-4 pt-4 border-t border-border flex items-center justify-between">
         <div>
-          <p className="text-sm font-semibold text-primary">{job.salary}</p>
+                    <p className="text-sm font-semibold text-primary">{formatSalary(job.salary)}</p>
           {job.applicants && (
             <p className="text-xs text-muted-foreground">{job.applicants} applicants</p>
           )}

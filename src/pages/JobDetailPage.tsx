@@ -1,327 +1,592 @@
-import { useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
-import { RoleBadge } from "@/components/RoleBadge";
-import VerificationBadge from "@/components/VerificationBadge";
+import { api } from "@/lib/api";
+import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   MapPin,
-  Clock,
-  Banknote,
   Briefcase,
-  ChevronLeft,
-  ChevronRight,
-  Share2,
-  Bookmark,
-  Flag,
-  CheckCircle,
+  Clock,
+  DollarSign,
   Building2,
   Users,
-  Calendar,
-  X,
+  Eye,
+  Share2,
+  Bookmark,
+  BookmarkCheck,
+  CheckCircle,
+  AlertCircle,
+  ArrowLeft,
+  Shield,
+  UserPlus,
+  Bell,
+  FileText,
+  Upload,
 } from "lucide-react";
 
-const mockJob = {
-  id: "1",
-  title: "Sales Representative",
-  company: "TechMart Nigeria",
-  companyLogo: "https://ui-avatars.com/api/?name=TechMart&background=0D9488&color=fff",
-  location: "Lagos, Nigeria",
-  type: "Full-time",
-  salary: "₦80,000 - ₦120,000/month",
-  category: "Sales & Marketing",
-  posted: "2 days ago",
-  deadline: "Dec 31, 2025",
-  applicants: 47,
-  verified: true,
-  role: "company" as const,
-  description: `We are looking for a motivated Sales Representative to join our growing team. You will be responsible for selling our electronics products to retail customers and building lasting relationships.
-
-This is an excellent opportunity for someone starting their career in sales who wants to grow with a dynamic company.`,
-  requirements: [
-    "Minimum SSCE/OND qualification",
-    "Strong communication skills",
-    "Customer-focused attitude",
-    "Ability to work weekends",
-    "Experience in retail is a plus",
-  ],
-  benefits: [
-    "Competitive base salary + commission",
-    "Health insurance after 6 months",
-    "Training provided",
-    "Growth opportunities",
-  ],
-  images: [
-    "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=600",
-    "https://images.unsplash.com/photo-1556742111-a301076d9d18?w=600",
-  ],
-};
-
-const relatedJobs = [
-  { id: "2", title: "Store Attendant", company: "ShopRite", location: "Abuja", salary: "₦60,000/month" },
-  { id: "3", title: "Customer Service Rep", company: "MTN Nigeria", location: "Lagos", salary: "₦90,000/month" },
-  { id: "4", title: "Marketing Assistant", company: "Jumia", location: "Lagos", salary: "₦75,000/month" },
-];
+interface Job {
+  _id: string;
+  title: string;
+  description: string;
+  category: string;
+  location: {
+    city: string;
+    state: string;
+    isRemote: boolean;
+  };
+  type: string;
+  salary?: {
+    min: number;
+    max: number;
+    currency: string;
+  };
+  requirements: {
+    skills: string[];
+    experience: {
+      min: number;
+      max: number;
+    };
+  };
+  companyName: string;
+  companyLogo?: string;
+  media?: Array<{
+    url: string;
+    type: string;
+  }>;
+  postedBy: {
+    _id: string;
+    fullName: string;
+    profilePhoto?: string;
+    verification?: {
+      isVerified: boolean;
+      isTrusted?: boolean;
+    };
+  };
+  tags: string[];
+  views: number;
+  applications: number;
+  createdAt: string;
+  isVerified: boolean;
+  isTrusted?: boolean;
+}
 
 const JobDetailPage = () => {
-  const { id } = useParams();
-  const [currentImage, setCurrentImage] = useState(0);
-  const [showApplyModal, setShowApplyModal] = useState(false);
-  const [showReportModal, setShowReportModal] = useState(false);
-  const [saved, setSaved] = useState(false);
-  const [applied, setApplied] = useState(false);
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const [job, setJob] = useState<Job | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [applying, setApplying] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [isConnected, setIsConnected] = useState(false);
+  const [showApplicationModal, setShowApplicationModal] = useState(false);
 
-  const handleApply = () => {
-    setApplied(true);
-    setShowApplyModal(false);
+  useEffect(() => {
+    fetchJobDetails();
+  }, [id]);
+
+  const fetchJobDetails = async () => {
+    try {
+      setLoading(true);
+      const response = await api.getJob(id!);
+      if (response.success) {
+        setJob(response.data.job);
+      } else {
+        toast.error("Job not found");
+        navigate("/jobs");
+      }
+    } catch (error: any) {
+      console.error("Error fetching job:", error);
+      toast.error("Failed to load job details");
+      navigate("/jobs");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleApply = async () => {
+    // Only job seekers can apply
+    if (user?.role !== 'seeker') {
+      toast.error("Only job seekers can apply for jobs");
+      return;
+    }
+
+    // Check if user profile is complete
+    if (!user?.cvUrl) {
+      toast.error("Please upload your CV before applying");
+      navigate("/profile/edit");
+      return;
+    }
+
+    if (!user?.skills || user.skills.length === 0) {
+      toast.error("Please complete your profile with skills before applying");
+      navigate("/profile/edit");
+      return;
+    }
+
+    if (!user?.location?.city || !user?.location?.state) {
+      toast.error("Please add your location in profile before applying");
+      navigate("/profile/edit");
+      return;
+    }
+
+    setShowApplicationModal(true);
+  };
+
+  const submitApplication = async () => {
+    try {
+      setApplying(true);
+      const response = await api.applyToJob(id!);
+      if (response.success) {
+        toast.success("Application submitted successfully!");
+        setShowApplicationModal(false);
+        fetchJobDetails(); // Refresh to update application count
+      } else {
+        toast.error(response.message || "Failed to apply");
+      }
+    } catch (error: any) {
+      toast.error(error.message || "Failed to apply to job");
+    } finally {
+      setApplying(false);
+    }
+  };
+
+  const handleSave = async () => {
+    try {
+      if (isSaved) {
+        await api.unsaveJob(id!);
+        setIsSaved(false);
+        toast.success("Job removed from saved");
+      } else {
+        await api.saveJob(id!);
+        setIsSaved(true);
+        toast.success("Job saved successfully!");
+      }
+    } catch (error: any) {
+      toast.error(error.message || "Failed to save job");
+    }
+  };
+
+  const handleFollow = async () => {
+    try {
+      if (isFollowing) {
+        await api.unfollowUser(job!.postedBy._id);
+        setIsFollowing(false);
+        toast.success("Unfollowed successfully");
+      } else {
+        await api.followUser(job!.postedBy._id);
+        setIsFollowing(true);
+        toast.success("Following! You'll get updates on new jobs");
+      }
+    } catch (error: any) {
+      toast.error(error.message || "Failed to follow");
+    }
+  };
+
+  const handleConnect = async () => {
+    try {
+      if (isConnected) {
+        await api.disconnectUser(job!.postedBy._id);
+        setIsConnected(false);
+        toast.success("Disconnected successfully");
+      } else {
+        await api.connectUser(job!.postedBy._id);
+        setIsConnected(true);
+        toast.success("Connection request sent!");
+      }
+    } catch (error: any) {
+      toast.error(error.message || "Failed to connect");
+    }
+  };
+
+  const handleShare = () => {
+    navigator.clipboard.writeText(window.location.href);
+    toast.success("Job link copied to clipboard!");
+  };
+
+  if (loading) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <span className="loading loading-spinner loading-lg"></span>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (!job) {
+    return (
+      <Layout>
+        <div className="max-w-4xl mx-auto px-4 py-12 text-center">
+          <AlertCircle className="w-16 h-16 mx-auto text-error mb-4" />
+          <h1 className="text-2xl font-bold mb-2">Job Not Found</h1>
+          <p className="text-base-content/70 mb-6">
+            The job you're looking for doesn't exist or has been removed.
+          </p>
+          <button onClick={() => navigate("/jobs")} className="btn btn-primary">
+            Browse Jobs
+          </button>
+        </div>
+      </Layout>
+    );
+  }
+
+  const formatSalary = () => {
+    if (!job.salary) return "Salary not specified";
+    const { min, max, currency } = job.salary;
+    const symbol = currency === "NGN" ? "₦" : currency;
+    return `${symbol}${min.toLocaleString()} - ${symbol}${max.toLocaleString()}/month`;
+  };
+
+  const formatDate = (date: string) => {
+    const now = new Date();
+    const posted = new Date(date);
+    const diff = now.getTime() - posted.getTime();
+    const seconds = Math.floor(diff / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+    
+    if (seconds < 60) return "Just now";
+    if (minutes < 60) return `${minutes} min${minutes > 1 ? 's' : ''} ago`;
+    if (hours < 24) return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+    if (days === 1) return "Yesterday";
+    if (days < 7) return `${days} days ago`;
+    if (days < 30) return `${Math.floor(days / 7)} week${Math.floor(days / 7) > 1 ? 's' : ''} ago`;
+    if (days < 365) return `${Math.floor(days / 30)} month${Math.floor(days / 30) > 1 ? 's' : ''} ago`;
+    return `${Math.floor(days / 365)} year${Math.floor(days / 365) > 1 ? 's' : ''} ago`;
   };
 
   return (
     <Layout>
       <div className="max-w-4xl mx-auto px-4 py-6">
         {/* Back Button */}
-        <Link to="/jobs" className="btn btn-ghost btn-sm gap-2 mb-4">
-          <ChevronLeft className="w-4 h-4" />
-          Back to Jobs
-        </Link>
+        <button
+          onClick={() => navigate(-1)}
+          className="btn btn-ghost btn-sm gap-2 mb-4"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back
+        </button>
 
-        {/* Main Card */}
-        <div className="card bg-base-100 shadow-lg">
-          {/* Image Gallery */}
-          {mockJob.images.length > 0 && (
-            <figure className="relative h-48 md:h-64 bg-base-200">
-              <img
-                src={mockJob.images[currentImage]}
-                alt={mockJob.title}
-                className="w-full h-full object-cover"
-              />
-              {mockJob.images.length > 1 && (
-                <>
-                  <button
-                    onClick={() => setCurrentImage((prev) => (prev > 0 ? prev - 1 : mockJob.images.length - 1))}
-                    className="btn btn-circle btn-sm absolute left-2 top-1/2 -translate-y-1/2"
-                  >
-                    <ChevronLeft className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => setCurrentImage((prev) => (prev < mockJob.images.length - 1 ? prev + 1 : 0))}
-                    className="btn btn-circle btn-sm absolute right-2 top-1/2 -translate-y-1/2"
-                  >
-                    <ChevronRight className="w-4 h-4" />
-                  </button>
-                  <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
-                    {mockJob.images.map((_, i) => (
-                      <button
-                        key={i}
-                        onClick={() => setCurrentImage(i)}
-                        className={`w-2 h-2 rounded-full transition-colors ${
-                          i === currentImage ? "bg-primary" : "bg-base-100/50"
-                        }`}
-                      />
-                    ))}
-                  </div>
-                </>
-              )}
-            </figure>
-          )}
-
+        {/* Job Header */}
+        <div className="card bg-base-100 shadow-sm mb-6">
           <div className="card-body">
-            {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-start gap-4">
-              <img
-                src={mockJob.companyLogo}
-                alt={mockJob.company}
-                className="w-16 h-16 rounded-lg"
-              />
+            <div className="flex items-start justify-between gap-4">
               <div className="flex-1">
-                <div className="flex flex-wrap items-center gap-2 mb-1">
-                  <h1 className="text-2xl font-bold">{mockJob.title}</h1>
-                  {mockJob.verified && <VerificationBadge />}
+                <div className="flex items-center gap-2 mb-2 flex-wrap">
+                  <h1 className="text-2xl font-bold">{job.title}</h1>
+                  {job.isVerified && (
+                    <div className="tooltip" data-tip="Verified Job">
+                      <CheckCircle className="w-5 h-5 text-primary" />
+                    </div>
+                  )}
+                  {job.isTrusted && (
+                    <div className="tooltip" data-tip="Trusted Employer">
+                      <Shield className="w-5 h-5 text-success" />
+                    </div>
+                  )}
                 </div>
-                <div className="flex flex-wrap items-center gap-2 text-base-content/70">
-                  <span className="font-medium">{mockJob.company}</span>
-                  <RoleBadge role={mockJob.role} size="sm" />
+                
+                <div className="flex items-center gap-2 text-base-content/70 mb-4">
+                  <Building2 className="w-4 h-4" />
+                  <span className="font-medium">{job.companyName}</span>
+                  {job.postedBy.verification?.isVerified && (
+                    <CheckCircle className="w-4 h-4 text-primary" />
+                  )}
                 </div>
+
+                <div className="flex flex-wrap gap-4 text-sm">
+                  <div className="flex items-center gap-1">
+                    <MapPin className="w-4 h-4" />
+                    <span>
+                      {job.location.city}, {job.location.state}
+                      {job.location.isRemote && " (Remote)"}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Briefcase className="w-4 h-4" />
+                    <span className="capitalize">{job.type.replace("-", " ")}</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Clock className="w-4 h-4" />
+                    <span>{formatDate(job.createdAt)}</span>
+                  </div>
+                </div>
+
+                {job.salary && (
+                  <div className="flex items-center gap-2 mt-3 text-primary font-semibold">
+                    <DollarSign className="w-5 h-5" />
+                    <span>{formatSalary()}</span>
+                  </div>
+                )}
               </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setSaved(!saved)}
-                  className={`btn btn-ghost btn-sm ${saved ? "text-warning" : ""}`}
-                >
-                  <Bookmark className={`w-5 h-5 ${saved ? "fill-current" : ""}`} />
-                </button>
-                <button className="btn btn-ghost btn-sm">
-                  <Share2 className="w-5 h-5" />
-                </button>
+
+              {/* Company Logo */}
+              <div className="avatar placeholder">
+                <div className="bg-primary text-primary-content rounded-lg w-20 h-20">
+                  {job.companyLogo ? (
+                    <img src={job.companyLogo} alt={job.companyName} className="object-cover" />
+                  ) : (
+                    <span className="text-3xl">{job.companyName[0]}</span>
+                  )}
+                </div>
               </div>
             </div>
 
-            {/* Quick Info */}
-            <div className="flex flex-wrap gap-4 py-4 border-y border-base-200 my-4">
-              <div className="flex items-center gap-2 text-sm">
-                <MapPin className="w-4 h-4 text-primary" />
-                {mockJob.location}
+            {/* Company Media/Photos */}
+            {job.media && job.media.length > 0 && (
+              <div className="mt-4 pt-4 border-t border-base-300">
+                <h3 className="text-sm font-medium mb-2">Company Photos</h3>
+                <div className="flex gap-2 overflow-x-auto">
+                  {job.media.map((item, index) => (
+                    <div key={index} className="w-32 h-32 flex-shrink-0 rounded-lg overflow-hidden">
+                      <img 
+                        src={item.url} 
+                        alt={`Company ${index + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  ))}
+                </div>
               </div>
-              <div className="flex items-center gap-2 text-sm">
-                <Briefcase className="w-4 h-4 text-primary" />
-                {mockJob.type}
-              </div>
-              <div className="flex items-center gap-2 text-sm">
-                <Banknote className="w-4 h-4 text-primary" />
-                {mockJob.salary}
-              </div>
-              <div className="flex items-center gap-2 text-sm">
-                <Clock className="w-4 h-4 text-primary" />
-                Posted {mockJob.posted}
-              </div>
+            )}
+
+            {/* Action Buttons */}
+            <div className="flex gap-3 mt-6">
+              {user?.role === 'seeker' ? (
+                <button
+                  onClick={handleApply}
+                  disabled={applying}
+                  className="btn btn-primary flex-1"
+                >
+                  {applying ? (
+                    <>
+                      <span className="loading loading-spinner loading-sm"></span>
+                      Applying...
+                    </>
+                  ) : (
+                    <>
+                      <FileText className="w-4 h-4" />
+                      Apply Now
+                    </>
+                  )}
+                </button>
+              ) : (
+                <button
+                  disabled
+                  className="btn btn-disabled flex-1"
+                >
+                  <FileText className="w-4 h-4" />
+                  Apply (Job Seekers Only)
+                </button>
+              )}
+              <button 
+                onClick={handleSave} 
+                className={`btn ${isSaved ? 'btn-primary' : 'btn-ghost'} btn-square`}
+              >
+                {isSaved ? <BookmarkCheck className="w-5 h-5" /> : <Bookmark className="w-5 h-5" />}
+              </button>
+              <button onClick={handleShare} className="btn btn-ghost btn-square">
+                <Share2 className="w-5 h-5" />
+              </button>
             </div>
 
             {/* Stats */}
-            <div className="stats stats-vertical md:stats-horizontal shadow-sm bg-base-200/50 mb-4">
-              <div className="stat py-3">
-                <div className="stat-figure text-primary">
-                  <Users className="w-6 h-6" />
-                </div>
-                <div className="stat-title text-xs">Applicants</div>
-                <div className="stat-value text-lg">{mockJob.applicants}</div>
+            <div className="flex gap-6 mt-4 pt-4 border-t border-base-300 text-sm text-base-content/70">
+              <div className="flex items-center gap-1">
+                <Eye className="w-4 h-4" />
+                <span>{job.views} views</span>
               </div>
-              <div className="stat py-3">
-                <div className="stat-figure text-warning">
-                  <Calendar className="w-6 h-6" />
-                </div>
-                <div className="stat-title text-xs">Deadline</div>
-                <div className="stat-value text-lg">{mockJob.deadline}</div>
+              <div className="flex items-center gap-1">
+                <Users className="w-4 h-4" />
+                <span>{job.applications} applicant{job.applications !== 1 ? 's' : ''}</span>
               </div>
-              <div className="stat py-3">
-                <div className="stat-figure text-accent">
-                  <Building2 className="w-6 h-6" />
-                </div>
-                <div className="stat-title text-xs">Category</div>
-                <div className="stat-value text-sm">{mockJob.category}</div>
-              </div>
-            </div>
-
-            {/* Description */}
-            <div className="space-y-4">
-              <div>
-                <h2 className="font-semibold mb-2">About this role</h2>
-                <p className="text-base-content/80 whitespace-pre-line">{mockJob.description}</p>
-              </div>
-
-              <div>
-                <h2 className="font-semibold mb-2">Requirements</h2>
-                <ul className="space-y-1">
-                  {mockJob.requirements.map((req, i) => (
-                    <li key={i} className="flex items-start gap-2 text-base-content/80">
-                      <CheckCircle className="w-4 h-4 text-success mt-0.5 shrink-0" />
-                      {req}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <div>
-                <h2 className="font-semibold mb-2">Benefits</h2>
-                <ul className="space-y-1">
-                  {mockJob.benefits.map((benefit, i) => (
-                    <li key={i} className="flex items-start gap-2 text-base-content/80">
-                      <CheckCircle className="w-4 h-4 text-primary mt-0.5 shrink-0" />
-                      {benefit}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-
-            {/* Actions */}
-            <div className="card-actions justify-between items-center mt-6 pt-4 border-t border-base-200">
-              <button
-                onClick={() => setShowReportModal(true)}
-                className="btn btn-ghost btn-sm text-error gap-2"
-              >
-                <Flag className="w-4 h-4" />
-                Report
-              </button>
-              <button
-                onClick={() => setShowApplyModal(true)}
-                disabled={applied}
-                className="btn btn-primary"
-              >
-                {applied ? "Applied" : "Apply Now"}
-              </button>
             </div>
           </div>
         </div>
 
-        {/* Related Jobs */}
-        <div className="mt-8">
-          <h2 className="text-lg font-semibold mb-4">Similar Jobs</h2>
-          <div className="grid gap-4 md:grid-cols-2">
-            {relatedJobs.map((job) => (
-              <Link key={job.id} to={`/jobs/${job.id}`} className="card bg-base-100 shadow-sm hover:shadow-md transition-shadow">
-                <div className="card-body p-4">
-                  <h3 className="font-medium">{job.title}</h3>
-                  <p className="text-sm text-base-content/70">{job.company}</p>
-                  <div className="flex justify-between text-sm mt-2">
-                    <span className="text-base-content/60">{job.location}</span>
-                    <span className="text-primary font-medium">{job.salary}</span>
+        {/* Job Description */}
+        <div className="card bg-base-100 shadow-sm mb-6">
+          <div className="card-body">
+            <h2 className="card-title text-lg mb-3">Job Description</h2>
+            <div className="prose max-w-none">
+              <p className="whitespace-pre-wrap text-base-content/80">{job.description}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Requirements */}
+        {job.requirements.skills.length > 0 && (
+          <div className="card bg-base-100 shadow-sm mb-6">
+            <div className="card-body">
+              <h2 className="card-title text-lg mb-3">Requirements</h2>
+              <ul className="space-y-2">
+                {job.requirements.skills.map((skill, index) => (
+                  <li key={index} className="flex items-start gap-2">
+                    <CheckCircle className="w-5 h-5 text-success mt-0.5 flex-shrink-0" />
+                    <span>{skill}</span>
+                  </li>
+                ))}
+              </ul>
+              
+              {job.requirements.experience.min > 0 && (
+                <div className="mt-4 pt-4 border-t border-base-300">
+                  <p className="text-sm text-base-content/70">
+                    <strong>Experience:</strong> {job.requirements.experience.min} - {job.requirements.experience.max} years
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Tags */}
+        {job.tags.length > 0 && (
+          <div className="card bg-base-100 shadow-sm mb-6">
+            <div className="card-body">
+              <h2 className="card-title text-lg mb-3">Tags</h2>
+              <div className="flex flex-wrap gap-2">
+                {job.tags.map((tag, index) => (
+                  <span key={index} className="badge badge-outline">
+                    #{tag}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Posted By */}
+        <div className="card bg-base-100 shadow-sm">
+          <div className="card-body">
+            <h2 className="card-title text-lg mb-3">Posted By</h2>
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="avatar placeholder">
+                  <div className="bg-primary text-primary-content rounded-full w-12">
+                    {job.postedBy.profilePhoto ? (
+                      <img src={job.postedBy.profilePhoto} alt={job.postedBy.fullName} />
+                    ) : (
+                      <span>{job.postedBy.fullName[0]}</span>
+                    )}
                   </div>
                 </div>
-              </Link>
-            ))}
+                <div>
+                  <div className="flex items-center gap-2">
+                    <p className="font-medium">{job.postedBy.fullName}</p>
+                    {job.postedBy.verification?.isVerified && (
+                      <CheckCircle className="w-4 h-4 text-primary" />
+                    )}
+                    {job.postedBy.verification?.isTrusted && (
+                      <Shield className="w-4 h-4 text-success" />
+                    )}
+                  </div>
+                  <button
+                    onClick={() => navigate(`/profile/${job.postedBy._id}`)}
+                    className="text-sm text-primary hover:underline"
+                  >
+                    View Profile
+                  </button>
+                </div>
+              </div>
+
+              {/* Connect and Follow Buttons */}
+              {user && job.postedBy._id !== user.id && (
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleConnect}
+                    className={`btn btn-sm ${isConnected ? 'btn-ghost' : 'btn-primary'} gap-1`}
+                  >
+                    <UserPlus className="w-4 h-4" />
+                    {isConnected ? 'Connected' : 'Connect'}
+                  </button>
+                  <button
+                    onClick={handleFollow}
+                    className={`btn btn-sm ${isFollowing ? 'btn-ghost' : 'btn-outline'} gap-1`}
+                  >
+                    <Bell className="w-4 h-4" />
+                    {isFollowing ? 'Following' : 'Follow'}
+                  </button>
+                </div>
+              )}
+            </div>
+            
+            {isFollowing && (
+              <div className="alert alert-info mt-3 text-sm">
+                <Bell className="w-4 h-4" />
+                <span>You'll receive updates when they post new jobs</span>
+              </div>
+            )}
           </div>
         </div>
+
+        {/* Application Modal */}
+        {showApplicationModal && (
+          <div className="modal modal-open">
+            <div className="modal-box">
+              <h3 className="font-bold text-lg mb-4">Confirm Application</h3>
+              
+              <div className="space-y-4">
+                <div className="alert alert-info">
+                  <AlertCircle className="w-5 h-5" />
+                  <div>
+                    <p className="font-medium">Your application will include:</p>
+                    <ul className="text-sm mt-2 space-y-1">
+                      <li>✓ Your profile information</li>
+                      <li>✓ Your uploaded CV/Resume</li>
+                      <li>✓ Your skills and experience</li>
+                    </ul>
+                  </div>
+                </div>
+
+                {!user?.cvUrl && (
+                  <div className="alert alert-warning">
+                    <Upload className="w-5 h-5" />
+                    <div>
+                      <p className="font-medium">CV Required</p>
+                      <p className="text-sm">Please upload your CV before applying</p>
+                      <button 
+                        onClick={() => navigate("/profile/edit")}
+                        className="btn btn-sm btn-warning mt-2"
+                      >
+                        Upload CV
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="modal-action">
+                <button 
+                  onClick={() => setShowApplicationModal(false)} 
+                  className="btn btn-ghost"
+                  disabled={applying}
+                >
+                  Cancel
+                </button>
+                <button 
+                  onClick={submitApplication}
+                  disabled={applying || !user?.cvUrl}
+                  className="btn btn-primary"
+                >
+                  {applying ? (
+                    <>
+                      <span className="loading loading-spinner loading-sm"></span>
+                      Submitting...
+                    </>
+                  ) : (
+                    "Submit Application"
+                  )}
+                </button>
+              </div>
+            </div>
+            <div className="modal-backdrop" onClick={() => !applying && setShowApplicationModal(false)}></div>
+          </div>
+        )}
       </div>
-
-      {/* Apply Modal */}
-      {showApplyModal && (
-        <div className="modal modal-open">
-          <div className="modal-box">
-            <button onClick={() => setShowApplyModal(false)} className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">
-              <X className="w-4 h-4" />
-            </button>
-            <h3 className="font-bold text-lg">Confirm Application</h3>
-            <p className="py-4">
-              You are about to apply for <strong>{mockJob.title}</strong> at <strong>{mockJob.company}</strong>.
-            </p>
-            <div className="alert alert-info text-sm mb-4">
-              <CheckCircle className="w-4 h-4" />
-              Your profile and CV will be shared with the employer.
-            </div>
-            <div className="modal-action">
-              <button onClick={() => setShowApplyModal(false)} className="btn btn-ghost">Cancel</button>
-              <button onClick={handleApply} className="btn btn-primary">Confirm Apply</button>
-            </div>
-          </div>
-          <div className="modal-backdrop" onClick={() => setShowApplyModal(false)} />
-        </div>
-      )}
-
-      {/* Report Modal */}
-      {showReportModal && (
-        <div className="modal modal-open">
-          <div className="modal-box">
-            <button onClick={() => setShowReportModal(false)} className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">
-              <X className="w-4 h-4" />
-            </button>
-            <h3 className="font-bold text-lg">Report this job</h3>
-            <p className="py-2 text-sm text-base-content/70">Help us keep JobFolio safe. Select a reason:</p>
-            <div className="form-control gap-2 py-4">
-              {["Fake or scam listing", "Inappropriate content", "Wrong information", "Other"].map((reason) => (
-                <label key={reason} className="label cursor-pointer justify-start gap-3">
-                  <input type="radio" name="report-reason" className="radio radio-sm radio-primary" />
-                  <span className="label-text">{reason}</span>
-                </label>
-              ))}
-            </div>
-            <textarea className="textarea textarea-bordered w-full" placeholder="Additional details (optional)" rows={3} />
-            <div className="modal-action">
-              <button onClick={() => setShowReportModal(false)} className="btn btn-ghost">Cancel</button>
-              <button onClick={() => setShowReportModal(false)} className="btn btn-error">Submit Report</button>
-            </div>
-          </div>
-          <div className="modal-backdrop" onClick={() => setShowReportModal(false)} />
-        </div>
-      )}
     </Layout>
   );
 };

@@ -46,10 +46,14 @@ const NetworkPage = () => {
       if (viewMode === "suggestions") {
         const response = await api.searchUsers({ limit: 50 });
         if (response.success && response.data) {
+          const connectedIds = (user?.connections || []).map((conn: any) => 
+            conn.user?._id || conn.user || conn._id || conn
+          );
+          
           const filtered = (response.data.users || []).filter(
             (u: UserProfile) => 
               u.id !== user?.id && 
-              !user?.connections?.includes(u.id)
+              !connectedIds.includes(u.id)
           );
           setSuggestions(filtered);
         }
@@ -147,7 +151,13 @@ const NetworkPage = () => {
       )
     : getDisplayList();
 
-  const isConnected = (userId: string) => user?.connections?.includes(userId);
+  const isConnected = (userId: string) => {
+    if (!user?.connections) return false;
+    return user.connections.some((conn: any) => 
+      (conn.user?._id || conn.user || conn._id || conn) === userId
+    );
+  };
+  
   const isFollowing = (userId: string) => user?.following?.includes(userId);
 
   return (

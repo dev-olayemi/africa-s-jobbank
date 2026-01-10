@@ -14,6 +14,8 @@ import {
 } from "lucide-react";
 import Logo from "@/components/Logo";
 import ThemeToggle from "@/components/ThemeToggle";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 type UserRole = "seeker" | "agent" | "business" | "company";
 
@@ -63,6 +65,7 @@ const roles: RoleOption[] = [
 
 const SignUpPage = () => {
   const navigate = useNavigate();
+  const { signup, isLoading } = useAuth();
   const [step, setStep] = useState(1);
   const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
   const [formData, setFormData] = useState({
@@ -71,6 +74,9 @@ const SignUpPage = () => {
     phone: "",
     password: "",
     confirmPassword: "",
+    companyName: "",
+    companySize: "",
+    industry: "",
     cvFile: null as File | null,
     photoFile: null as File | null,
   });
@@ -94,10 +100,51 @@ const SignUpPage = () => {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Would normally submit to backend
-    navigate("/verify");
+    
+    // Validate passwords match
+    if (formData.password !== formData.confirmPassword) {
+      toast.error("Passwords do not match");
+      return;
+    }
+
+    // Validate password length
+    if (formData.password.length < 6) {
+      toast.error("Password must be at least 6 characters");
+      return;
+    }
+
+    // Validate role-specific requirements
+    if ((selectedRole === 'business' || selectedRole === 'company') && !formData.companyName) {
+      toast.error("Company name is required");
+      return;
+    }
+
+    try {
+      const signupData: any = {
+        fullName: formData.fullName,
+        email: formData.email,
+        phone: formData.phone,
+        password: formData.password,
+        role: selectedRole!,
+      };
+
+      // Add company fields for business/company roles
+      if (selectedRole === 'business' || selectedRole === 'company') {
+        signupData.companyName = formData.companyName;
+        signupData.companySize = formData.companySize || '1-10';
+        signupData.industry = formData.industry || 'Other';
+      }
+
+      await signup(signupData);
+      
+      // Navigate to verify page
+      navigate("/verify");
+    } catch (error: any) {
+      console.error('Signup error:', error);
+      // Error is already handled in auth context
+    }
   };
 
   return (
@@ -309,6 +356,65 @@ const SignUpPage = () => {
                   </div>
                 </div>
 
+                {/* Business/Company specific fields */}
+                {(selectedRole === "business" || selectedRole === "company") && (
+                  <div className="space-y-4 pt-4 border-t border-border">
+                    <p className="text-sm font-medium">Company Information</p>
+                    
+                    <div className="form-control">
+                      <label className="label">
+                        <span className="label-text font-medium">Company Name</span>
+                      </label>
+                      <input
+                        type="text"
+                        name="companyName"
+                        value={formData.companyName}
+                        onChange={handleInputChange}
+                        className="input input-bordered w-full"
+                        placeholder="Enter company name"
+                        required
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="form-control">
+                        <label className="label">
+                          <span className="label-text font-medium">Company Size</span>
+                        </label>
+                        <select
+                          name="companySize"
+                          value={formData.companySize}
+                          onChange={(e) => setFormData({ ...formData, companySize: e.target.value })}
+                          className="select select-bordered w-full"
+                          required
+                        >
+                          <option value="">Select size</option>
+                          <option value="1-10">1-10 employees</option>
+                          <option value="11-50">11-50 employees</option>
+                          <option value="51-200">51-200 employees</option>
+                          <option value="201-500">201-500 employees</option>
+                          <option value="500+">500+ employees</option>
+                        </select>
+                      </div>
+
+                      <div className="form-control">
+                        <label className="label">
+                          <span className="label-text font-medium">Industry</span>
+                        </label>
+                        <input
+                          type="text"
+                          name="industry"
+                          value={formData.industry}
+                          onChange={handleInputChange}
+                          className="input input-bordered w-full"
+                          placeholder="e.g. Technology"
+                          required
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {/* Job Seeker specific fields */}
                 {selectedRole === "seeker" && (
                   <div className="space-y-4 pt-4 border-t border-border">
@@ -371,9 +477,22 @@ const SignUpPage = () => {
                 )}
 
                 <div className="pt-4">
-                  <button type="submit" className="btn btn-primary w-full gap-2">
-                    Continue to Verification
-                    <ArrowRight className="h-4 w-4" />
+                  <button 
+                    type="submit" 
+                    className="btn btn-primary w-full gap-2"
+                    disabled={isLoading}
+                  >
+                    {isLoading ? (
+                      <>
+                        <span className="loading loading-spinner loading-sm"></span>
+                        Creating account...
+                      </>
+                    ) : (
+                      <>
+                        Continue to Verification
+                        <ArrowRight className="h-4 w-4" />
+                      </>
+                    )}
                   </button>
                 </div>
 

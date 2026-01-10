@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JOBFOLIO Auth Test Dashboard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container { 
+            max-width: 1200px; 
+            margin: 0 auto; 
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 { 
+            color: #0D9488; 
+            text-align: center; 
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+        .status-bar {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #dc3545;
+        }
+        .status-dot.connected {
+            background: #28a745;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .test-section {
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 20px;
+            background: #f8f9fa;
+        }
+        .test-section h3 {
+            color: #0D9488;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #495057;
+            font-weight: 500;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #0D9488;
+        }
+        button {
+            background: linear-gradient(135deg, #0D9488 0%, #0f766e 100%);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            width: 100%;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(13, 148, 136, 0.3);
+        }
+        button:active {
+            transform: translateY(0);
+        }
+        button:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .result {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 13px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .result.success {
+            background: #d4edda;
+            border: 2px solid #c3e6cb;
+            color: #155724;
+        }
+        .result.error {
+            background: #f8d7da;
+            border: 2px solid #f5c6cb;
+            color: #721c24;
+        }
+        .result pre {
+            background: rgba(0,0,0,0.05);
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+            margin-top: 10px;
+        }
+        .token-display {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            word-break: break-all;
+        }
+        .token-display strong {
+            color: #856404;
+        }
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+        .badge.success { background: #28a745; color: white; }
+        .badge.warning { background: #ffc107; color: #000; }
+        .badge.danger { background: #dc3545; color: white; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 JOBFOLIO Auth Test Dashboard</h1>
+        <p class="subtitle">Complete Authentication System Testing</p>
+
+        <div class="status-bar">
+            <div class="status-item">
+                <div class="status-dot" id="serverStatus"></div>
+                <span id="serverStatusText">Checking server...</span>
+            </div>
+            <div class="status-item">
+                <span id="tokenStatus">No token</span>
+            </div>
+        </div>
+
+        <div id="tokenDisplay" class="token-display" style="display: none;">
+            <strong>🔑 Active Token:</strong>
+            <div id="tokenValue" style="margin-top: 10px; font-family: monospace; font-size: 12px;"></div>
+        </div>
+
+        <div class="grid">
+            <!-- Registration -->
+            <div class="test-section">
+                <h3>📝 User Registration</h3>
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" id="regFullName" value="Test User">
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="regEmail" value="">
+                </div>
+                <div class="form-group">
+                    <label>Phone</label>
+                    <input type="tel" id="regPhone" value="">
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="regPassword" value="password123">
+                </div>
+                <div class="form-group">
+                    <label>Role</label>
+                    <select id="regRole" onchange="toggleCompanyFields()">
+                        <option value="seeker">Job Seeker</option>
+                        <option value="agent">Agent</option>
+                        <option value="business">Business</option>
+                        <option value="company">Company</option>
+                    </select>
+                </div>
+                <div id="companyFields" style="display: none;">
+                    <div class="form-group">
+                        <label>Company Name</label>
+                        <input type="text" id="regCompanyName" value="Test Company">
+                    </div>
+                    <div class="form-group">
+                        <label>Company Size</label>
+                        <select id="regCompanySize">
+                            <option value="1-10">1-10</option>
+                            <option value="11-50">11-50</option>
+                            <option value="51-200">51-200</option>
+                            <option value="201-500">201-500</option>
+                            <option value="500+">500+</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Industry</label>
+                        <input type="text" id="regIndustry" value="Technology">
+                    </div>
+                </div>
+                <button onclick="testRegistration()">Register User</button>
+                <div id="regResult" class="result" style="display: none;"></div>
+            </div>
+
+            <!-- Login -->
+            <div class="test-section">
+                <h3>🔓 User Login</h3>
+                <div class="form-group">
+                    <label>Email or Phone</label>
+                    <input type="text" id="loginIdentifier" value="">
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="loginPassword" value="password123">
+                </div>
+                <button onclick="testLogin()">Login</button>
+                <div id="loginResult" class="result" style="display: none;"></div>
+            </div>
+
+            <!-- Email Verification -->
+            <div class="test-section">
+                <h3>📧 Email Verification</h3>
+                <div class="form-group">
+                    <label>Verification Code (6 digits)</label>
+                    <input type="text" id="verifyCode" placeholder="123456" maxlength="6">
+                </div>
+                <button onclick="testVerifyEmail()" id="verifyBtn" disabled>Verify Email</button>
+                <button onclick="testResendCode()" id="resendBtn" disabled style="margin-top: 10px; background: #6c757d;">Resend Code</button>
+                <div id="verifyResult" class="result" style="display: none;"></div>
+            </div>
+
+            <!-- Get Profile -->
+            <div class="test-section">
+                <h3>👤 Get Current User</h3>
+                <button onclick="testGetProfile()" id="profileBtn" disabled>Get My Profile</button>
+                <div id="profileResult" class="result" style="display: none;"></div>
+            </div>
+
+            <!-- Password Reset -->
+            <div class="test-section">
+                <h3>🔑 Password Reset</h3>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="resetEmail" value="">
+                </div>
+                <button onclick="testForgotPassword()">Request Reset Code</button>
+                <div class="form-group" style="margin-top: 15px;">
+                    <label>Reset Code</label>
+                    <input type="text" id="resetCode" placeholder="123456">
+                </div>
+                <div class="form-group">
+                    <label>New Password</label>
+                    <input type="password" id="resetNewPassword" value="newpassword123">
+                </div>
+                <button onclick="testResetPassword()" style="background: #dc3545;">Reset Password</button>
+                <div id="resetResult" class="result" style="display: none;"></div>
+            </div>
+
+            <!-- Logout -->
+            <div class="test-section">
+                <h3>🚪 Logout</h3>
+                <p style="margin-bottom: 15px; color: #666;">Clear current session and token</p>
+                <button onclick="testLogout()" id="logoutBtn" disabled style="background: #dc3545;">Logout</button>
+                <div id="logoutResult" class="result" style="display: none;"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:5000/api';
+        let authToken = null;
+        let currentUser = null;
+
+        // Generate unique email and phone
+        function generateUniqueEmail() {
+            return `test${Date.now()}@example.com`;
+        }
+
+        function generateUniquePhone() {
+            return `+234${Math.floor(Math.random() * 1000000000)}`;
+        }
+
+        // Auto-fill unique values
+        document.getElementById('regEmail').value = generateUniqueEmail();
+        document.getElementById('regPhone').value = generateUniquePhone();
+        document.getElementById('loginIdentifier').value = document.getElementById('regEmail').value;
+        document.getElementById('resetEmail').value = document.getElementById('regEmail').value;
+
+        function toggleCompanyFields() {
+            const role = document.getElementById('regRole').value;
+            const companyFields = document.getElementById('companyFields');
+            companyFields.style.display = ['business', 'company'].includes(role) ? 'block' : 'none';
+        }
+
+        function updateTokenDisplay() {
+            const tokenDisplay = document.getElementById('tokenDisplay');
+            const tokenValue = document.getElementById('tokenValue');
+            const tokenStatus = document.getElementById('tokenStatus');
+            
+            if (authToken) {
+                tokenDisplay.style.display = 'block';
+                tokenValue.textContent = authToken;
+                tokenStatus.innerHTML = '<span class="badge success">Authenticated</span>';
+                
+                // Enable authenticated buttons
+                document.getElementById('verifyBtn').disabled = false;
+                document.getElementById('resendBtn').disabled = false;
+                document.getElementById('profileBtn').disabled = false;
+                document.getElementById('logoutBtn').disabled = false;
+            } else {
+                tokenDisplay.style.display = 'none';
+                tokenStatus.innerHTML = '<span class="badge danger">Not authenticated</span>';
+                
+                // Disable authenticated buttons
+                document.getElementById('verifyBtn').disabled = true;
+                document.getElementById('resendBtn').disabled = true;
+                document.getElementById('profileBtn').disabled = true;
+                document.getElementById('logoutBtn').disabled = true;
+            }
+        }
+
+        async function makeRequest(url, options = {}) {
+            try {
+                const response = await fetch(url, {
+                    ...options,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...(authToken && { 'Authorization': `Bearer ${authToken}` }),
+                        ...options.headers
+                    }
+                });
+                
+                const data = await response.json();
+                return { success: response.ok, data, status: response.status };
+            } catch (error) {
+                return { success: false, error: error.message };
+            }
+        }
+
+        function displayResult(elementId, result) {
+            const element = document.getElementById(elementId);
+            element.style.display = 'block';
+            element.className = `result ${result.success ? 'success' : 'error'}`;
+            
+            let html = `<strong>${result.success ? '✅ Success' : '❌ Error'}</strong>`;
+            
+            if (result.data) {
+                if (result.data.message) {
+                    html += `<p>${result.data.message}</p>`;
+                }
+                html += `<pre>${JSON.stringify(result.data, null, 2)}</pre>`;
+            } else if (result.error) {
+                html += `<p>${result.error}</p>`;
+            }
+            
+            element.innerHTML = html;
+        }
+
+        async function testRegistration() {
+            const role = document.getElementById('regRole').value;
+            const userData = {
+                fullName: document.getElementById('regFullName').value,
+                email: document.getElementById('regEmail').value,
+                phone: document.getElementById('regPhone').value,
+                password: document.getElementById('regPassword').value,
+                role: role
+            };
+
+            if (['business', 'company'].includes(role)) {
+                userData.companyName = document.getElementById('regCompanyName').value;
+                userData.companySize = document.getElementById('regCompanySize').value;
+                userData.industry = document.getElementById('regIndustry').value;
+            }
+
+            const result = await makeRequest(`${API_BASE}/auth/signup`, {
+                method: 'POST',
+                body: JSON.stringify(userData)
+            });
+
+            if (result.success && result.data.data.token) {
+                authToken = result.data.data.token;
+                currentUser = result.data.data.user;
+                updateTokenDisplay();
+                
+                // Auto-fill login
+                document.getElementById('loginIdentifier').value = userData.email;
+            }
+
+            displayResult('regResult', result);
+        }
+
+        async function testLogin() {
+            const loginData = {
+                identifier: document.getElementById('loginIdentifier').value,
+                password: document.getElementById('loginPassword').value
+            };
+
+            const result = await makeRequest(`${API_BASE}/auth/login`, {
+                method: 'POST',
+                body: JSON.stringify(loginData)
+            });
+
+            if (result.success && result.data.data.token) {
+                authToken = result.data.data.token;
+                currentUser = result.data.data.user;
+                updateTokenDisplay();
+            }
+
+            displayResult('loginResult', result);
+        }
+
+        async function testVerifyEmail() {
+            const code = document.getElementById('verifyCode').value;
+            
+            const result = await makeRequest(`${API_BASE}/auth/verify-email`, {
+                method: 'POST',
+                body: JSON.stringify({ code })
+            });
+
+            displayResult('verifyResult', result);
+        }
+
+        async function testResendCode() {
+            const result = await makeRequest(`${API_BASE}/auth/resend-verification`, {
+                method: 'POST'
+            });
+
+            displayResult('verifyResult', result);
+        }
+
+        async function testGetProfile() {
+            const result = await makeRequest(`${API_BASE}/auth/me`);
+            displayResult('profileResult', result);
+        }
+
+        async function testForgotPassword() {
+            const email = document.getElementById('resetEmail').value;
+            
+            const result = await makeRequest(`${API_BASE}/auth/forgot-password`, {
+                method: 'POST',
+                body: JSON.stringify({ email })
+            });
+
+            displayResult('resetResult', result);
+        }
+
+        async function testResetPassword() {
+            const resetData = {
+                token: document.getElementById('resetCode').value,
+                password: document.getElementById('resetNewPassword').value
+            };
+            
+            const result = await makeRequest(`${API_BASE}/auth/reset-password`, {
+                method: 'POST',
+                body: JSON.stringify(resetData)
+            });
+
+            displayResult('resetResult', result);
+        }
+
+        async function testLogout() {
+            const result = await makeRequest(`${API_BASE}/auth/logout`, {
+                method: 'POST'
+            });
+
+            authToken = null;
+            currentUser = null;
+            updateTokenDisplay();
+            
+            displayResult('logoutResult', result);
+        }
+
+        // Check server status on load
+        async function checkServerStatus() {
+            try {
+                const response = await fetch(`${API_BASE}/health`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    document.getElementById('serverStatus').classList.add('connected');
+                    document.getElementById('serverStatusText').textContent = 'Server connected';
+                } else {
+                    document.getElementById('serverStatusText').textContent = 'Server error';
+                }
+            } catch (error) {
+                document.getElementById('serverStatusText').textContent = 'Server offline';
+            }
+        }
+
+        // Initialize
+        checkServerStatus();
+        updateTokenDisplay();
+    </script>
+</body>
+</html>

@@ -3,20 +3,29 @@ import { Link, useNavigate } from "react-router-dom";
 import { Eye, EyeOff, ArrowRight } from "lucide-react";
 import Logo from "@/components/Logo";
 import ThemeToggle from "@/components/ThemeToggle";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 const LoginPage = () => {
   const navigate = useNavigate();
+  const { login, isLoading } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
-    email: "",
+    identifier: "",
     password: "",
     remember: false,
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Would normally authenticate
-    navigate("/dashboard");
+    
+    try {
+      await login(formData.identifier, formData.password);
+      navigate("/dashboard");
+    } catch (error: any) {
+      // Error is already handled in the auth context with toast
+      console.error('Login error:', error);
+    }
   };
 
   return (
@@ -48,11 +57,12 @@ const LoginPage = () => {
                 </label>
                 <input
                   type="text"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  value={formData.identifier}
+                  onChange={(e) => setFormData({ ...formData, identifier: e.target.value })}
                   className="input input-bordered w-full"
-                  placeholder="you@example.com"
+                  placeholder="you@example.com or +234..."
                   required
+                  disabled={isLoading}
                 />
               </div>
 
@@ -71,11 +81,13 @@ const LoginPage = () => {
                     className="input input-bordered w-full pr-10"
                     placeholder="••••••••"
                     required
+                    disabled={isLoading}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    disabled={isLoading}
                   >
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
@@ -89,19 +101,38 @@ const LoginPage = () => {
                     checked={formData.remember}
                     onChange={(e) => setFormData({ ...formData, remember: e.target.checked })}
                     className="checkbox checkbox-primary checkbox-sm"
+                    disabled={isLoading}
                   />
                   <span className="label-text">Remember me for 30 days</span>
                 </label>
               </div>
 
-              <button type="submit" className="btn btn-primary w-full gap-2">
-                Sign In
-                <ArrowRight className="h-4 w-4" />
+              <button 
+                type="submit" 
+                className="btn btn-primary w-full gap-2"
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <>
+                    <span className="loading loading-spinner loading-sm"></span>
+                    Signing in...
+                  </>
+                ) : (
+                  <>
+                    Sign In
+                    <ArrowRight className="h-4 w-4" />
+                  </>
+                )}
               </button>
 
               <div className="divider text-xs text-muted-foreground">OR</div>
 
-              <button type="button" className="btn btn-outline w-full gap-2">
+              <button 
+                type="button" 
+                className="btn btn-outline w-full gap-2"
+                disabled={isLoading}
+                onClick={() => toast.info('Google login coming soon!')}
+              >
                 <svg className="h-5 w-5" viewBox="0 0 24 24">
                   <path
                     fill="currentColor"

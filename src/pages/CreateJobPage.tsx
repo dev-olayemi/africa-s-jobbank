@@ -1,45 +1,41 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
+import { api } from "@/lib/api";
+import { toast } from "sonner";
 import {
-  Briefcase,
-  MapPin,
-  Banknote,
   Image,
   X,
   Plus,
   Hash,
   AlertCircle,
-  CheckCircle,
 } from "lucide-react";
 
 const categories = [
-  "Sales & Marketing",
-  "Hospitality",
-  "Retail",
-  "Logistics",
-  "Customer Service",
-  "Security",
-  "Admin & Office",
-  "IT & Tech",
-  "Healthcare",
-  "Education",
-  "Other",
+  { label: "Sales & Marketing", value: "marketing-media" },
+  { label: "Hospitality & Food", value: "hospitality-food" },
+  { label: "Retail", value: "retail-sales" },
+  { label: "Logistics & Transport", value: "logistics-transport" },
+  { label: "Customer Service", value: "customer-service" },
+  { label: "Security & Cleaning", value: "security-cleaning" },
+  { label: "Admin & Office", value: "admin-office" },
+  { label: "IT & Tech", value: "technology-digital" },
+  { label: "Healthcare & Beauty", value: "healthcare-beauty" },
+  { label: "Education & Training", value: "education-training" },
+  { label: "Construction & Trades", value: "construction-trades" },
+  { label: "Finance & Accounting", value: "finance-accounting" },
+  { label: "Agriculture & Farming", value: "agriculture-farming" },
+  { label: "Manufacturing & Production", value: "manufacturing-production" },
+  { label: "Other", value: "other" },
 ];
 
-const locations = [
-  "Lagos",
-  "Abuja",
-  "Port Harcourt",
-  "Ibadan",
-  "Kano",
-  "Kaduna",
-  "Enugu",
-  "Benin City",
-  "Other",
+const jobTypes = [
+  { label: "Full-time", value: "full-time" },
+  { label: "Part-time", value: "part-time" },
+  { label: "Contract", value: "contract" },
+  { label: "Internship", value: "internship" },
+  { label: "Freelance", value: "freelance" },
 ];
-
-const jobTypes = ["Full-time", "Part-time", "Contract", "Internship", "Remote"];
 
 const CreateJobPage = () => {
   const navigate = useNavigate();
@@ -47,16 +43,24 @@ const CreateJobPage = () => {
   const [formData, setFormData] = useState({
     title: "",
     category: "",
-    location: "",
+    city: "",
+    state: "",
     type: "",
     salaryMin: "",
     salaryMax: "",
     description: "",
+    companyName: "",
+    companyEmail: "",
+    companyPhone: "",
+    companyAddress: "",
   });
   const [requirements, setRequirements] = useState<string[]>([""]);
   const [hashtags, setHashtags] = useState<string[]>([]);
   const [hashtagInput, setHashtagInput] = useState("");
   const [images, setImages] = useState<string[]>([]);
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
+  const [uploadingImages, setUploadingImages] = useState(false);
+  const [showCompanyDetails, setShowCompanyDetails] = useState(false);
 
   const isVerified = true; // Mock verification status
 
@@ -89,32 +93,142 @@ const CreateJobPage = () => {
     setHashtags(hashtags.filter((t) => t !== tag));
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
-    if (files) {
-      const newImages = Array.from(files).map((file) => URL.createObjectURL(file));
-      setImages([...images, ...newImages].slice(0, 5));
+    if (!files || files.length === 0) return;
+
+    try {
+      setUploadingImages(true);
+      const newFiles = Array.from(files).slice(0, 5 - imageFiles.length);
+      
+      // Create preview URLs
+      const previews = newFiles.map((file) => URL.createObjectURL(file));
+      setImages([...images, ...previews]);
+      setImageFiles([...imageFiles, ...newFiles]);
+      
+      toast.success(`${newFiles.length} image(s) added`);
+    } catch (error) {
+      toast.error("Failed to add images");
+    } finally {
+      setUploadingImages(false);
     }
   };
 
   const removeImage = (index: number) => {
+    // Revoke the blob URL to free memory
+    URL.revokeObjectURL(images[index]);
     setImages(images.filter((_, i) => i !== index));
+    setImageFiles(imageFiles.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    navigate("/my-jobs");
+    
+    if (!isFormValid) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+
+      // Upload images first if any
+      let uploadedMedia: Array<{ url: string; type: string }> = [];
+      if (imageFiles.length > 0) {
+        toast.info("Uploading images...");
+        
+        for (const file of imageFiles) {
+          const formData = new FormData();
+          formData.append('image', file);
+          
+          try {
+            const response = await api.uploadJobImage(formData);
+            if (response.success && response.data) {
+              uploadedMedia.push({
+                url: response.data.url,
+                type: 'image'
+              });
+            }
+          } catch (error) {
+            console.error('Failed to upload image:', error);
+            // Continue with other images
+          }
+        }
+      }
+
+      // Prepare job data
+      const jobData: any = {
+        title: formData.title,
+        category: formData.category,
+        location: {
+          city: formData.city,
+          state: formData.state,
+          country: 'Nigeria',
+          isRemote: false
+        },
+        type: formData.type,
+        description: formData.description,
+        companyName: formData.companyName,
+        requirements: {
+          skills: requirements.filter(r => r.trim()),
+          experience: {
+            min: 0,
+            max: 10
+          }
+        },
+        tags: hashtags,
+        media: uploadedMedia.length > 0 ? uploadedMedia : undefined,
+      };
+
+      // Add salary if provided
+      if (formData.salaryMin && formData.salaryMax) {
+        jobData.salary = {
+          min: parseInt(formData.salaryMin),
+          max: parseInt(formData.salaryMax),
+          currency: 'NGN'
+        };
+      }
+
+      // Add optional company details if provided
+      if (formData.companyEmail) {
+        jobData.applicationEmail = formData.companyEmail;
+      }
+      if (formData.companyPhone) {
+        jobData.applicationPhone = formData.companyPhone;
+      }
+      if (formData.companyAddress) {
+        jobData.location.address = formData.companyAddress;
+      }
+
+      console.log('Submitting job data:', jobData);
+
+      const response = await api.createJob(jobData);
+      
+      console.log('Job creation response:', response);
+      
+      if (response.success) {
+        toast.success("Job posted successfully!");
+        navigate("/my-jobs");
+      } else {
+        toast.error(response.message || "Failed to post job");
+      }
+    } catch (error: any) {
+      console.error('Job posting error:', error);
+      toast.error(error.message || "Failed to post job. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const isFormValid =
     formData.title &&
     formData.category &&
-    formData.location &&
+    formData.city &&
+    formData.state &&
     formData.type &&
-    formData.description;
+    formData.description &&
+    formData.description.length >= 50 &&
+    formData.companyName;
 
   return (
     <Layout>
@@ -167,7 +281,7 @@ const CreateJobPage = () => {
                   >
                     <option value="">Select category</option>
                     {categories.map((cat) => (
-                      <option key={cat} value={cat}>{cat}</option>
+                      <option key={cat.value} value={cat.value}>{cat.label}</option>
                     ))}
                   </select>
                 </div>
@@ -185,28 +299,41 @@ const CreateJobPage = () => {
                   >
                     <option value="">Select type</option>
                     {jobTypes.map((type) => (
-                      <option key={type} value={type}>{type}</option>
+                      <option key={type.value} value={type.value}>{type.label}</option>
                     ))}
                   </select>
                 </div>
               </div>
 
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text">Location</span>
-                </label>
-                <select
-                  name="location"
-                  value={formData.location}
-                  onChange={handleInputChange}
-                  className="select select-bordered"
-                  required
-                >
-                  <option value="">Select location</option>
-                  {locations.map((loc) => (
-                    <option key={loc} value={loc}>{loc}</option>
-                  ))}
-                </select>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text">City</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="city"
+                    placeholder="e.g., Lagos"
+                    value={formData.city}
+                    onChange={handleInputChange}
+                    className="input input-bordered"
+                    required
+                  />
+                </div>
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text">State</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="state"
+                    placeholder="e.g., Lagos State"
+                    value={formData.state}
+                    onChange={handleInputChange}
+                    className="input input-bordered"
+                    required
+                  />
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -240,6 +367,100 @@ const CreateJobPage = () => {
             </div>
           </div>
 
+          {/* Company Details Card */}
+          <div className="card bg-base-100 shadow-sm">
+            <div className="card-body">
+              <h2 className="card-title text-base">Company Details</h2>
+              <p className="text-sm text-base-content/60 mb-2">
+                Add company information for this job posting
+              </p>
+
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text">Company Name</span>
+                </label>
+                <input
+                  type="text"
+                  name="companyName"
+                  placeholder="e.g., ABC Corporation"
+                  value={formData.companyName}
+                  onChange={handleInputChange}
+                  className="input input-bordered"
+                  required
+                />
+                <label className="label">
+                  <span className="label-text-alt text-base-content/60">
+                    Enter the company name or search for existing companies
+                  </span>
+                </label>
+              </div>
+
+              {/* Optional Company Details - Collapsible */}
+              <div className="form-control">
+                <label className="label cursor-pointer justify-start gap-2">
+                  <input
+                    type="checkbox"
+                    className="checkbox checkbox-sm"
+                    checked={showCompanyDetails}
+                    onChange={(e) => setShowCompanyDetails(e.target.checked)}
+                  />
+                  <span className="label-text">Add additional company details (optional)</span>
+                </label>
+              </div>
+
+              {showCompanyDetails && (
+                <div className="space-y-4 mt-2 pl-4 border-l-2 border-base-300">
+                  <div className="form-control">
+                    <label className="label">
+                      <span className="label-text">Company Email</span>
+                    </label>
+                    <input
+                      type="email"
+                      name="companyEmail"
+                      placeholder="e.g., hr@company.com"
+                      value={formData.companyEmail}
+                      onChange={handleInputChange}
+                      className="input input-bordered input-sm"
+                    />
+                  </div>
+
+                  <div className="form-control">
+                    <label className="label">
+                      <span className="label-text">Company Phone</span>
+                    </label>
+                    <input
+                      type="tel"
+                      name="companyPhone"
+                      placeholder="e.g., +234 800 000 0000"
+                      value={formData.companyPhone}
+                      onChange={handleInputChange}
+                      className="input input-bordered input-sm"
+                    />
+                  </div>
+
+                  <div className="form-control">
+                    <label className="label">
+                      <span className="label-text">Company Address</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="companyAddress"
+                      placeholder="e.g., 123 Main Street, Lagos"
+                      value={formData.companyAddress}
+                      onChange={handleInputChange}
+                      className="input input-bordered input-sm"
+                    />
+                  </div>
+
+                  <div className="alert alert-info text-sm">
+                    <AlertCircle className="w-4 h-4" />
+                    <span>These details can be added later from your profile settings</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
           {/* Description Card */}
           <div className="card bg-base-100 shadow-sm">
             <div className="card-body">
@@ -248,12 +469,17 @@ const CreateJobPage = () => {
               <div className="form-control">
                 <textarea
                   name="description"
-                  placeholder="Describe the role, responsibilities, and what makes this opportunity great..."
+                  placeholder="Describe the role, responsibilities, and what makes this opportunity great... (minimum 50 characters)"
                   value={formData.description}
                   onChange={handleInputChange}
                   className="textarea textarea-bordered h-32"
                   required
                 />
+                <label className="label">
+                  <span className="label-text-alt text-base-content/60">
+                    {formData.description.length}/50 characters minimum
+                  </span>
+                </label>
               </div>
 
               {/* Requirements */}
@@ -355,7 +581,7 @@ const CreateJobPage = () => {
                     placeholder="Add hashtag"
                     value={hashtagInput}
                     onChange={(e) => setHashtagInput(e.target.value)}
-                    onKeyPress={(e) => e.key === "Enter" && (e.preventDefault(), addHashtag())}
+                    onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addHashtag())}
                     className="input input-bordered input-sm w-full pl-9"
                   />
                 </div>

@@ -1,216 +1,200 @@
-import { useState } from "react";
 import { Link } from "react-router-dom";
+import { ArrowLeft, Camera, MapPin, Briefcase, Mail, Phone, Calendar } from "lucide-react";
 import Layout from "@/components/Layout";
-import { RoleBadge } from "@/components/RoleBadge";
+import { useAuth } from "@/contexts/AuthContext";
 import VerificationBadge from "@/components/VerificationBadge";
-import { JobCard, SocialPostCard } from "@/components/FeedCards";
-import {
-  MapPin,
-  Calendar,
-  Link as LinkIcon,
-  Settings,
-  UserPlus,
-  UserMinus,
-  MessageSquare,
-  Briefcase,
-  FileText,
-} from "lucide-react";
-
-const mockUser = {
-  id: "1",
-  name: "Adaeze Okonkwo",
-  username: "@adaeze_okonkwo",
-  avatar: "https://ui-avatars.com/api/?name=Adaeze+Okonkwo&background=0D9488&color=fff&size=200",
-  coverImage: "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=1200&h=300&fit=crop",
-  role: "seeker" as const,
-  verified: true,
-  bio: "Sales professional with 3 years experience in retail and hospitality. Looking for new opportunities in Lagos.",
-  location: "Lagos, Nigeria",
-  joinedDate: "March 2024",
-  website: "",
-  followers: 234,
-  following: 189,
-  skills: ["Sales", "Customer Service", "Communication", "Retail"],
-  categories: ["Sales & Marketing", "Hospitality", "Retail"],
-  isOwnProfile: true,
-};
-
-const mockPosts = [
-  {
-    id: 1,
-    author: { name: "Adaeze Okonkwo", role: "Job Seeker", avatar: mockUser.avatar, verified: true },
-    content: "Excited to share that I just completed my customer service certification! Ready for new challenges.",
-    likes: 45,
-    comments: 12,
-    shares: 3,
-    posted: "2 hours ago",
-  },
-];
 
 const ProfilePage = () => {
-  const [activeTab, setActiveTab] = useState<"posts" | "about">("posts");
-  const [isFollowing, setIsFollowing] = useState(false);
+  const { user } = useAuth();
 
   return (
     <Layout>
-      <div className="max-w-3xl mx-auto">
-        {/* Cover Image */}
-        <div className="h-32 md:h-48 bg-gradient-to-r from-primary to-accent relative">
-          {mockUser.coverImage && (
-            <img src={mockUser.coverImage} alt="" className="w-full h-full object-cover" />
-          )}
-        </div>
+      <div className="container mx-auto px-4 max-w-4xl">
+        {/* Back Button */}
+        <Link 
+          to="/dashboard" 
+          className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-6"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to Dashboard
+        </Link>
 
         {/* Profile Header */}
-        <div className="bg-base-100 px-4 pb-4 relative">
-          {/* Avatar */}
-          <div className="absolute -top-12 md:-top-16 left-4">
-            <img
-              src={mockUser.avatar}
-              alt={mockUser.name}
-              className="w-24 h-24 md:w-32 md:h-32 rounded-full border-4 border-base-100"
-            />
+        <div className="bg-card rounded-xl border border-border overflow-hidden mb-6">
+          {/* Cover Photo */}
+          <div className="h-32 md:h-48 bg-gradient-to-r from-primary to-teal-light relative">
+            <button className="absolute bottom-4 right-4 btn btn-sm btn-circle bg-background/80 hover:bg-background">
+              <Camera className="h-4 w-4" />
+            </button>
           </div>
 
-          {/* Actions */}
-          <div className="flex justify-end pt-3 gap-2">
-            {mockUser.isOwnProfile ? (
-              <Link to="/profile/edit" className="btn btn-outline btn-sm gap-2">
-                <Settings className="w-4 h-4" />
+          {/* Profile Info */}
+          <div className="px-6 pb-6">
+            <div className="flex flex-col md:flex-row md:items-end md:justify-between -mt-16 md:-mt-20">
+              {/* Avatar */}
+              <div className="relative mb-4 md:mb-0">
+                <img
+                  src={user?.profilePhoto || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.fullName || 'User')}&background=0d9488&color=fff&size=256`}
+                  alt={user?.fullName}
+                  className="w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-card object-cover"
+                />
+                <button className="absolute bottom-2 right-2 btn btn-sm btn-circle bg-primary text-primary-foreground">
+                  <Camera className="h-4 w-4" />
+                </button>
+              </div>
+
+              {/* Edit Button */}
+              <Link to="/profile/edit" className="btn btn-primary btn-sm">
                 Edit Profile
               </Link>
-            ) : (
-              <>
-                <button className="btn btn-ghost btn-sm btn-circle">
-                  <MessageSquare className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => setIsFollowing(!isFollowing)}
-                  className={`btn btn-sm gap-2 ${isFollowing ? "btn-ghost" : "btn-primary"}`}
-                >
-                  {isFollowing ? (
-                    <>
-                      <UserMinus className="w-4 h-4" />
-                      Following
-                    </>
-                  ) : (
-                    <>
-                      <UserPlus className="w-4 h-4" />
-                      Follow
-                    </>
-                  )}
-                </button>
-              </>
-            )}
-          </div>
-
-          {/* Info */}
-          <div className="mt-8 md:mt-12">
-            <div className="flex flex-wrap items-center gap-2 mb-1">
-              <h1 className="text-xl font-bold">{mockUser.name}</h1>
-              {mockUser.verified && <VerificationBadge />}
-              <RoleBadge role={mockUser.role} size="sm" />
-            </div>
-            <p className="text-base-content/60 text-sm">{mockUser.username}</p>
-
-            {mockUser.bio && (
-              <p className="mt-3 text-base-content/80">{mockUser.bio}</p>
-            )}
-
-            <div className="flex flex-wrap gap-4 mt-3 text-sm text-base-content/60">
-              {mockUser.location && (
-                <span className="flex items-center gap-1">
-                  <MapPin className="w-4 h-4" />
-                  {mockUser.location}
-                </span>
-              )}
-              <span className="flex items-center gap-1">
-                <Calendar className="w-4 h-4" />
-                Joined {mockUser.joinedDate}
-              </span>
-              {mockUser.website && (
-                <a href={mockUser.website} className="flex items-center gap-1 text-primary hover:underline">
-                  <LinkIcon className="w-4 h-4" />
-                  Website
-                </a>
-              )}
             </div>
 
-            {/* Stats */}
-            <div className="flex gap-4 mt-4">
-              <Link to="/network" className="hover:underline">
-                <span className="font-semibold">{mockUser.followers}</span>{" "}
-                <span className="text-base-content/60">Followers</span>
-              </Link>
-              <Link to="/network" className="hover:underline">
-                <span className="font-semibold">{mockUser.following}</span>{" "}
-                <span className="text-base-content/60">Following</span>
-              </Link>
-            </div>
-          </div>
+            {/* Name and Title */}
+            <div className="mt-4">
+              <div className="flex items-center gap-2 mb-1">
+                <h1 className="text-2xl font-bold">{user?.fullName}</h1>
+                {user?.verification?.email && (
+                  <VerificationBadge type="verified" size="md" />
+                )}
+              </div>
+              <p className="text-muted-foreground mb-4">
+                {user?.role === 'seeker' && (user?.bio || 'Job Seeker')}
+                {user?.role === 'agent' && 'Recruitment Agent'}
+                {user?.role === 'business' && (user?.companyName || 'Business Owner')}
+                {user?.role === 'company' && (user?.companyName || 'Company')}
+              </p>
 
-          {/* Tabs */}
-          <div className="tabs tabs-bordered mt-6 -mb-4">
-            <button
-              onClick={() => setActiveTab("posts")}
-              className={`tab ${activeTab === "posts" ? "tab-active" : ""}`}
-            >
-              Posts
-            </button>
-            <button
-              onClick={() => setActiveTab("about")}
-              className={`tab ${activeTab === "about" ? "tab-active" : ""}`}
-            >
-              About
-            </button>
+              {/* Contact Info */}
+              <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+                {user?.location?.city && user?.location?.state && (
+                  <div className="flex items-center gap-1">
+                    <MapPin className="h-4 w-4" />
+                    <span>{user.location.city}, {user.location.state}</span>
+                  </div>
+                )}
+                <div className="flex items-center gap-1">
+                  <Mail className="h-4 w-4" />
+                  <span>{user?.email}</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Phone className="h-4 w-4" />
+                  <span>{user?.phone}</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Calendar className="h-4 w-4" />
+                  <span>Joined {new Date(user?.createdAt || Date.now()).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Content */}
-        <div className="px-4 py-6">
-          {activeTab === "posts" ? (
-            <div className="space-y-4">
-              {mockPosts.map((post) => (
-                <SocialPostCard key={post.id} post={post} />
-              ))}
-            </div>
-          ) : (
-            <div className="space-y-6">
-              {/* Skills */}
-              {mockUser.skills.length > 0 && (
-                <div className="card bg-base-100 shadow-sm">
-                  <div className="card-body">
-                    <h3 className="font-semibold flex items-center gap-2">
-                      <Briefcase className="w-4 h-4 text-primary" />
-                      Skills
-                    </h3>
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      {mockUser.skills.map((skill) => (
-                        <span key={skill} className="badge badge-ghost">{skill}</span>
-                      ))}
-                    </div>
-                  </div>
+        {/* Profile Sections */}
+        <div className="grid md:grid-cols-3 gap-6">
+          {/* About */}
+          <div className="md:col-span-2 space-y-6">
+            <div className="bg-card rounded-xl border border-border p-6">
+              <h2 className="text-lg font-semibold mb-4">About</h2>
+              {user?.bio ? (
+                <p className="text-muted-foreground">{user.bio}</p>
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-muted-foreground mb-4">Tell others about yourself</p>
+                  <Link to="/profile/edit" className="btn btn-outline btn-sm">
+                    Add Bio
+                  </Link>
                 </div>
               )}
+            </div>
 
-              {/* Job Preferences */}
-              {mockUser.categories.length > 0 && (
-                <div className="card bg-base-100 shadow-sm">
-                  <div className="card-body">
-                    <h3 className="font-semibold flex items-center gap-2">
-                      <FileText className="w-4 h-4 text-primary" />
-                      Job Preferences
-                    </h3>
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      {mockUser.categories.map((cat) => (
-                        <span key={cat} className="badge badge-primary badge-outline">{cat}</span>
-                      ))}
-                    </div>
+            {/* Skills */}
+            {user?.role === 'seeker' && (
+              <div className="bg-card rounded-xl border border-border p-6">
+                <h2 className="text-lg font-semibold mb-4">Skills</h2>
+                {user?.skills && user.skills.length > 0 ? (
+                  <div className="flex flex-wrap gap-2">
+                    {user.skills.map((skill, index) => (
+                      <span key={index} className="badge badge-primary badge-lg">
+                        {skill}
+                      </span>
+                    ))}
                   </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <p className="text-muted-foreground mb-4">Add your skills to stand out</p>
+                    <Link to="/profile/edit" className="btn btn-outline btn-sm">
+                      Add Skills
+                    </Link>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Experience */}
+            {user?.role === 'seeker' && user?.experience && (
+              <div className="bg-card rounded-xl border border-border p-6">
+                <h2 className="text-lg font-semibold mb-4">Experience</h2>
+                <div className="flex items-center gap-2">
+                  <Briefcase className="h-5 w-5 text-primary" />
+                  <span className="font-medium">{user.experience.level}</span>
+                  <span className="text-muted-foreground">• {user.experience.years} years</span>
                 </div>
-              )}
+              </div>
+            )}
+          </div>
+
+          {/* Sidebar */}
+          <div className="space-y-6">
+            {/* Stats */}
+            <div className="bg-card rounded-xl border border-border p-6">
+              <h3 className="font-semibold mb-4">Profile Stats</h3>
+              <div className="space-y-3">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Profile Views</span>
+                  <span className="font-semibold">0</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Connections</span>
+                  <span className="font-semibold">{user?.connections?.length || 0}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Posts</span>
+                  <span className="font-semibold">0</span>
+                </div>
+              </div>
             </div>
-          )}
+
+            {/* Verification Status */}
+            <div className="bg-card rounded-xl border border-border p-6">
+              <h3 className="font-semibold mb-4">Verification</h3>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">Email</span>
+                  {user?.verification?.email ? (
+                    <span className="badge badge-success badge-sm">Verified</span>
+                  ) : (
+                    <span className="badge badge-warning badge-sm">Pending</span>
+                  )}
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">Phone</span>
+                  {user?.verification?.phone ? (
+                    <span className="badge badge-success badge-sm">Verified</span>
+                  ) : (
+                    <span className="badge badge-ghost badge-sm">Not Verified</span>
+                  )}
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">Identity</span>
+                  {user?.verification?.identity ? (
+                    <span className="badge badge-success badge-sm">Verified</span>
+                  ) : (
+                    <span className="badge badge-ghost badge-sm">Not Verified</span>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </Layout>

@@ -1,161 +1,309 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import {
+  Image, Video, Smile, Hash, AtSign, X, Loader2, Upload, FileText
+} from "lucide-react";
 import Layout from "@/components/Layout";
-import { Image, X, Hash, AtSign, Send } from "lucide-react";
+import { api } from "@/lib/api";
+import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 
 const CreatePostPage = () => {
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [content, setContent] = useState("");
-  const [images, setImages] = useState<string[]>([]);
-  const [hashtags, setHashtags] = useState<string[]>([]);
-  const [hashtagInput, setHashtagInput] = useState("");
+  const [media, setMedia] = useState<File[]>([]);
+  const [mediaPreview, setMediaPreview] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (files) {
-      const newImages = Array.from(files).map((file) => URL.createObjectURL(file));
-      setImages([...images, ...newImages].slice(0, 4));
+  const handleMediaSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    
+    // Validate file types and sizes
+    const validFiles = files.filter(file => {
+      const isImage = file.type.startsWith('image/');
+      const isVideo = file.type.startsWith('video/');
+      const isValidSize = file.size <= (isVideo ? 50 : 5) * 1024 * 1024;
+      
+      if (!isImage && !isVideo) {
+        toast.error(`${file.name} is not a valid image or video`);
+        return false;
+      }
+      
+      if (!isValidSize) {
+        toast.error(`${file.name} is too large. Max ${isVideo ? '50MB' : '5MB'}`);
+        return false;
+      }
+      
+      return true;
+    });
+
+    if (validFiles.length + media.length > 10) {
+      toast.error("Maximum 10 files allowed");
+      return;
     }
+
+    // Create previews
+    const newPreviews: string[] = [];
+    validFiles.forEach(file => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        newPreviews.push(reader.result as string);
+        if (newPreviews.length === validFiles.length) {
+          setMediaPreview([...mediaPreview, ...newPreviews]);
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+
+    setMedia([...media, ...validFiles]);
   };
 
-  const removeImage = (index: number) => {
-    setImages(images.filter((_, i) => i !== index));
-  };
-
-  const addHashtag = () => {
-    if (hashtagInput.trim() && !hashtags.includes(hashtagInput.trim())) {
-      setHashtags([...hashtags, hashtagInput.trim()]);
-      setHashtagInput("");
-    }
-  };
-
-  const removeHashtag = (tag: string) => {
-    setHashtags(hashtags.filter((t) => t !== tag));
+  const removeMedia = (index: number) => {
+    setMedia(media.filter((_, i) => i !== index));
+    setMediaPreview(mediaPreview.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    navigate("/dashboard");
+
+    if (!content.trim() && media.length === 0) {
+      toast.error("Please add some content or media");
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+
+      // Upload media first if any
+      let mediaUrls: any[] = [];
+      if (media.length > 0) {
+        setIsUploading(true);
+        const uploadResponse = await api.uploadMedia(media);
+        
+        if (uploadResponse.success && uploadResponse.data) {
+          mediaUrls = uploadResponse.data.files.map((file: any) => ({
+            url: file.url,
+            type: file.type,
+            publicId: file.publicId
+          }));
+        }
+        setIsUploading(false);
+      }
+
+      // Create post
+      const response = await api.createPost({
+        content: content.trim(),
+        media: mediaUrls,
+        isPublic: true
+      });
+
+      if (response.success) {
+        toast.success("Post created successfully!");
+        navigate("/dashboard");
+      }
+    } catch (error: any) {
+      toast.error(error.message || "Failed to create post");
+    } finally {
+      setIsSubmitting(false);
+      setIsUploading(false);
+    }
+  };
+
+  const insertHashtag = () => {
+    setContent(content + " #");
+  };
+
+  const insertMention = () => {
+    setContent(content + " @");
   };
 
   return (
     <Layout>
-      <div className="max-w-xl mx-auto px-4 py-6">
-        <h1 className="text-2xl font-bold mb-6">Create Post</h1>
+      <div className="min-h-screen bg-base-200 py-8">
+        <div className="container mx-auto px-4 max-w-3xl">
+          {/* Header */}
+          <div className="mb-6">
+            <h1 className="text-3xl font-bold mb-2">Create a Post</h1>
+            <p className="text-base-content/60">
+              Share your thoughts, updates, or achievements with your network
+            </p>
+          </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Content */}
-          <div className="card bg-base-100 shadow-sm">
-            <div className="card-body">
-              <textarea
-                placeholder="Share an update, service, or opportunity..."
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                className="textarea textarea-ghost text-lg w-full h-32 resize-none focus:outline-none p-0"
-                required
-              />
-
-              {/* Image Previews */}
-              {images.length > 0 && (
-                <div className={`grid gap-2 mt-4 ${images.length === 1 ? "grid-cols-1" : "grid-cols-2"}`}>
-                  {images.map((img, index) => (
-                    <div key={index} className="relative aspect-video">
-                      <img src={img} alt="" className="w-full h-full object-cover rounded-lg" />
-                      <button
-                        type="button"
-                        onClick={() => removeImage(index)}
-                        className="btn btn-circle btn-sm absolute top-2 right-2"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* Hashtags */}
-              {hashtags.length > 0 && (
-                <div className="flex flex-wrap gap-2 mt-4">
-                  {hashtags.map((tag) => (
-                    <span key={tag} className="badge badge-primary gap-1">
-                      #{tag}
-                      <button type="button" onClick={() => removeHashtag(tag)}>
-                        <X className="w-3 h-3" />
-                      </button>
-                    </span>
-                  ))}
-                </div>
-              )}
-
-              {/* Actions */}
-              <div className="flex items-center justify-between pt-4 border-t border-base-200 mt-4">
-                <div className="flex gap-1">
-                  <label className="btn btn-ghost btn-sm btn-circle cursor-pointer">
-                    <Image className="w-5 h-5" />
-                    <input
-                      type="file"
-                      accept="image/*"
-                      multiple
-                      onChange={handleImageUpload}
-                      className="hidden"
-                    />
-                  </label>
-                  <div className="dropdown dropdown-top">
-                    <label tabIndex={0} className="btn btn-ghost btn-sm btn-circle">
-                      <Hash className="w-5 h-5" />
-                    </label>
-                    <div tabIndex={0} className="dropdown-content z-10 p-3 shadow bg-base-100 rounded-box w-52 mb-2">
-                      <div className="flex gap-2">
-                        <input
-                          type="text"
-                          placeholder="Add hashtag"
-                          value={hashtagInput}
-                          onChange={(e) => setHashtagInput(e.target.value)}
-                          onKeyPress={(e) => e.key === "Enter" && (e.preventDefault(), addHashtag())}
-                          className="input input-bordered input-sm flex-1"
-                        />
-                        <button type="button" onClick={addHashtag} className="btn btn-sm btn-primary">
-                          Add
-                        </button>
-                      </div>
+          {/* Create Post Form */}
+          <form onSubmit={handleSubmit}>
+            <div className="card bg-base-100 shadow-xl border border-base-300">
+              <div className="card-body p-6">
+                {/* User Info */}
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="avatar">
+                    <div className="w-12 h-12 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2">
+                      <img
+                        src={user?.profilePhoto || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.fullName || 'User')}&background=0d9488&color=fff&size=128`}
+                        alt={user?.fullName}
+                      />
                     </div>
                   </div>
-                  <button type="button" className="btn btn-ghost btn-sm btn-circle">
-                    <AtSign className="w-5 h-5" />
-                  </button>
+                  <div>
+                    <p className="font-semibold">{user?.fullName}</p>
+                    <p className="text-sm text-base-content/60 capitalize">{user?.role}</p>
+                  </div>
                 </div>
-                <span className="text-sm text-base-content/50">{content.length}/500</span>
+
+                {/* Content Textarea */}
+                <textarea
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                  placeholder="What's on your mind? Share your thoughts, use #hashtags and @mentions..."
+                  className="textarea textarea-bordered w-full min-h-[200px] text-lg resize-none focus:outline-none focus:ring-2 focus:ring-primary"
+                  maxLength={2000}
+                />
+
+                <div className="flex justify-between items-center text-sm text-base-content/60 mb-4">
+                  <span>{content.length}/2000 characters</span>
+                  <div className="flex gap-2">
+                    <span className="badge badge-sm">
+                      {content.match(/#\w+/g)?.length || 0} hashtags
+                    </span>
+                    <span className="badge badge-sm">
+                      {content.match(/@\w+/g)?.length || 0} mentions
+                    </span>
+                  </div>
+                </div>
+
+                {/* Media Preview */}
+                {mediaPreview.length > 0 && (
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
+                    {mediaPreview.map((preview, index) => (
+                      <div key={index} className="relative group">
+                        {media[index].type.startsWith('image/') ? (
+                          <img
+                            src={preview}
+                            alt={`Preview ${index + 1}`}
+                            className="w-full h-40 object-cover rounded-lg"
+                          />
+                        ) : (
+                          <video
+                            src={preview}
+                            className="w-full h-40 object-cover rounded-lg"
+                            controls
+                          />
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => removeMedia(index)}
+                          className="absolute top-2 right-2 btn btn-circle btn-sm btn-error opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Toolbar */}
+                <div className="divider my-2"></div>
+                
+                <div className="flex items-center justify-between">
+                  <div className="flex gap-2">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*,video/*"
+                      multiple
+                      onChange={handleMediaSelect}
+                      className="hidden"
+                    />
+                    
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="btn btn-ghost btn-sm gap-2"
+                      disabled={media.length >= 10}
+                    >
+                      <Image className="h-4 w-4" />
+                      <span className="hidden sm:inline">Photo/Video</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={insertHashtag}
+                      className="btn btn-ghost btn-sm gap-2"
+                    >
+                      <Hash className="h-4 w-4" />
+                      <span className="hidden sm:inline">Hashtag</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={insertMention}
+                      className="btn btn-ghost btn-sm gap-2"
+                    >
+                      <AtSign className="h-4 w-4" />
+                      <span className="hidden sm:inline">Mention</span>
+                    </button>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => navigate(-1)}
+                      className="btn btn-ghost"
+                      disabled={isSubmitting}
+                    >
+                      Cancel
+                    </button>
+                    
+                    <button
+                      type="submit"
+                      className="btn btn-primary gap-2"
+                      disabled={isSubmitting || isUploading || (!content.trim() && media.length === 0)}
+                    >
+                      {isSubmitting || isUploading ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          {isUploading ? "Uploading..." : "Posting..."}
+                        </>
+                      ) : (
+                        <>
+                          <FileText className="h-4 w-4" />
+                          Post
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
+          </form>
 
-          {/* Submit */}
-          <div className="flex gap-3">
-            <button type="button" onClick={() => navigate(-1)} className="btn btn-ghost flex-1">
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={!content.trim() || isSubmitting}
-              className="btn btn-primary flex-1 gap-2"
-            >
-              {isSubmitting ? (
-                <>
-                  <span className="loading loading-spinner loading-sm"></span>
-                  Posting...
-                </>
-              ) : (
-                <>
-                  <Send className="w-4 h-4" />
-                  Post
-                </>
-              )}
-            </button>
+          {/* Tips Card */}
+          <div className="card bg-base-100 shadow-lg border border-base-300 mt-6">
+            <div className="card-body p-6">
+              <h3 className="font-semibold mb-3">Tips for great posts:</h3>
+              <ul className="space-y-2 text-sm text-base-content/70">
+                <li className="flex items-start gap-2">
+                  <span className="text-primary">•</span>
+                  Use <strong>#hashtags</strong> to increase discoverability
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-primary">•</span>
+                  Tag people with <strong>@mentions</strong> to engage your network
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-primary">•</span>
+                  Add images or videos to make your post more engaging
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-primary">•</span>
+                  Keep it professional and authentic
+                </li>
+              </ul>
+            </div>
           </div>
-        </form>
+        </div>
       </div>
     </Layout>
   );

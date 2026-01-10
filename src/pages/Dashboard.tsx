@@ -1,111 +1,99 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import {
   Briefcase,
   TrendingUp,
   Users,
   Bell,
-  ChevronRight,
   Filter,
   Sparkles,
+  Loader2,
+  User,
 } from "lucide-react";
-import { ShoppingCart, Home, Truck } from "lucide-react";
 import Layout from "@/components/Layout";
-import { JobCard, SocialPostCard } from "@/components/FeedCards";
+import { JobCard } from "@/components/FeedCards";
+import PostCard from "@/components/PostCard";
 import VerificationBadge from "@/components/VerificationBadge";
-
-const mockJobs = [
-  {
-    id: 1,
-    title: "Sales Associate",
-    company: "Shoprite Nigeria",
-    location: "Lagos",
-    type: "Full-time",
-    salary: "₦80,000 - ₦120,000",
-    posted: "2h ago",
-    verified: true,
-    logo: <ShoppingCart className="h-6 w-6" />,
-    description: "Join our dynamic retail team and help customers find what they need.",
-    tags: ["retail", "sales", "customer-service"],
-    applicants: 45,
-  },
-  {
-    id: 2,
-    title: "Hotel Receptionist",
-    company: "Transcorp Hilton",
-    location: "Abuja",
-    type: "Full-time",
-    salary: "₦100,000 - ₦150,000",
-    posted: "4h ago",
-    verified: true,
-    logo: <Home className="h-6 w-6" />,
-    tags: ["hospitality", "front-desk"],
-    applicants: 32,
-  },
-  {
-    id: 3,
-    title: "Delivery Rider",
-    company: "Jumia Foods",
-    location: "Lagos",
-    type: "Contract",
-    salary: "₦60,000 - ₦90,000",
-    posted: "1d ago",
-    verified: true,
-    logo: <Truck className="h-6 w-6" />,
-    tags: ["logistics", "delivery"],
-    applicants: 78,
-  },
-];
-
-const mockPosts = [
-  {
-    id: 1,
-    author: {
-      name: "Chidi Okoro",
-      role: "HR Manager at GTBank",
-      avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face",
-      verified: true,
-    },
-    content: "We're hiring! Looking for fresh graduates to join our customer service team. No experience needed - just passion and willingness to learn. DM me or apply through JobFolio!",
-    likes: 234,
-    comments: 45,
-    shares: 12,
-    posted: "3h ago",
-    hashtags: ["hiring", "banking", "freshgraduate"],
-  },
-  {
-    id: 2,
-    author: {
-      name: "Amara Eze",
-      role: "Career Coach",
-      avatar: "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=100&h=100&fit=crop&crop=face",
-      verified: true,
-    },
-    content: "5 things I wish I knew before my first job interview:\n\n1. Research the company (not just the role)\n2. Prepare 3 questions to ask THEM\n3. Arrive 15 mins early\n4. Bring extra copies of your CV\n5. Follow up with a thank you email\n\nWhat would you add?",
-    image: "https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=600&h=400&fit=crop",
-    likes: 567,
-    comments: 89,
-    shares: 45,
-    posted: "5h ago",
-    hashtags: ["careertips", "interviewtips", "jobseekers"],
-  },
-];
-
-const quickStats = [
-  { label: "Jobs Applied", value: "12", icon: Briefcase, trend: "+3 this week" },
-  { label: "Profile Views", value: "89", icon: TrendingUp, trend: "+15%" },
-  { label: "Connections", value: "234", icon: Users, trend: "+8 new" },
-  { label: "Job Alerts", value: "5", icon: Bell, trend: "3 new matches" },
-];
+import { useAuth } from "@/contexts/AuthContext";
+import { api } from "@/lib/api";
+import { toast } from "sonner";
 
 const Dashboard = () => {
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<"all" | "jobs" | "social">("all");
+  const [jobs, setJobs] = useState<any[]>([]);
+  const [posts, setPosts] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [stats, setStats] = useState({
+    jobsApplied: 0,
+    profileViews: 0,
+    connections: 0,
+    jobAlerts: 0,
+  });
+
+  // Fetch dashboard data
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        setIsLoading(true);
+
+        // Fetch jobs
+        const jobsResponse = await api.getJobs({ limit: 10 });
+        if (jobsResponse.success && jobsResponse.data) {
+          setJobs(jobsResponse.data.jobs || []);
+        }
+
+        // Fetch posts with smart feed
+        const postsResponse = await api.getPosts({ limit: 10, type: 'feed' });
+        if (postsResponse.success && postsResponse.data) {
+          setPosts(postsResponse.data.posts || []);
+        }
+
+        // Fetch user stats (applications, connections, etc.)
+        // This would come from your API endpoints
+        setStats({
+          jobsApplied: 0, // TODO: Fetch from applications API
+          profileViews: 0, // TODO: Implement profile views tracking
+          connections: user?.connections?.length || 0,
+          jobAlerts: 0, // TODO: Implement job alerts
+        });
+
+      } catch (error: any) {
+        console.error('Failed to fetch dashboard data:', error);
+        toast.error('Failed to load dashboard data');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, [user]);
+
+  const quickStats = [
+    { label: "Jobs Applied", value: stats.jobsApplied.toString(), icon: Briefcase, trend: "Track applications" },
+    { label: "Profile Views", value: stats.profileViews.toString(), icon: TrendingUp, trend: "Increase visibility" },
+    { label: "Connections", value: stats.connections.toString(), icon: Users, trend: "Grow network" },
+    { label: "Job Alerts", value: stats.jobAlerts.toString(), icon: Bell, trend: "Set preferences" },
+  ];
 
   const feed = activeTab === "all" 
-    ? [...mockJobs.slice(0, 2), ...mockPosts.slice(0, 1), ...mockJobs.slice(2), ...mockPosts.slice(1)]
+    ? [...jobs.slice(0, 3), ...posts.slice(0, 2), ...jobs.slice(3)]
     : activeTab === "jobs" 
-    ? mockJobs 
-    : mockPosts;
+    ? jobs 
+    : posts;
+
+  if (isLoading) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="text-center">
+            <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
+            <p className="text-muted-foreground">Loading your dashboard...</p>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
@@ -119,18 +107,28 @@ const Dashboard = () => {
               <div className="px-4 pb-4">
                 <div className="-mt-10 mb-3">
                   <img
-                    src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face"
+                    src={user?.profilePhoto || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.fullName || 'User')}&background=0d9488&color=fff&size=128`}
                     alt="Profile"
                     className="w-20 h-20 rounded-full border-4 border-card object-cover"
                   />
                 </div>
                 <div className="flex items-center gap-2 mb-1">
-                  <h3 className="font-semibold">John Doe</h3>
-                  <VerificationBadge type="verified" size="sm" />
+                  <h3 className="font-semibold">{user?.fullName || 'User'}</h3>
+                  {user?.verification?.email && (
+                    <VerificationBadge type="verified" size="sm" />
+                  )}
                 </div>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Seeking retail & hospitality roles in Lagos
+                <p className="text-sm text-muted-foreground mb-2">
+                  {user?.role === 'seeker' && (user?.bio || 'Job Seeker')}
+                  {user?.role === 'agent' && 'Recruitment Agent'}
+                  {user?.role === 'business' && (user?.companyName || 'Business Owner')}
+                  {user?.role === 'company' && (user?.companyName || 'Company')}
                 </p>
+                {user?.location?.city && user?.location?.state && (
+                  <p className="text-xs text-muted-foreground mb-4">
+                    📍 {user.location.city}, {user.location.state}
+                  </p>
+                )}
                 <Link to="/profile" className="btn btn-outline btn-sm w-full">
                   View Profile
                 </Link>
@@ -151,28 +149,23 @@ const Dashboard = () => {
               </div>
             </div>
 
-            {/* Job Alerts */}
-            <div className="bg-card rounded-xl border border-border p-4 mt-4">
-              <div className="flex items-center justify-between mb-3">
-                <h4 className="font-semibold flex items-center gap-2">
-                  <Bell className="h-4 w-4 text-primary" />
-                  Job Alerts
-                </h4>
-                <Link to="/alerts" className="text-xs text-primary hover:underline">
-                  Manage
-                </Link>
+            {/* Job Alerts - Hide until implemented */}
+            {false && (
+              <div className="bg-card rounded-xl border border-border p-4 mt-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="font-semibold flex items-center gap-2">
+                    <Bell className="h-4 w-4 text-primary" />
+                    Job Alerts
+                  </h4>
+                  <Link to="/alerts" className="text-xs text-primary hover:underline">
+                    Manage
+                  </Link>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Set up job alerts to get notified about new opportunities
+                </p>
               </div>
-              <div className="space-y-2">
-                {["Retail", "Hospitality", "Customer Service"].map((cat, i) => (
-                  <div key={i} className="flex items-center justify-between text-sm">
-                    <span>{cat}</span>
-                    <span className="badge badge-primary badge-sm">
-                      {Math.floor(Math.random() * 20 + 5)} new
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
+            )}
           </aside>
 
           {/* Main Feed */}
@@ -211,7 +204,7 @@ const Dashboard = () => {
             <div className="bg-card rounded-xl border border-border p-4 mb-4">
               <div className="flex items-center gap-3">
                 <img
-                  src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face"
+                  src={user?.profilePhoto || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.fullName || 'User')}&background=0d9488&color=fff&size=128`}
                   alt="Profile"
                   className="w-10 h-10 rounded-full object-cover"
                 />
@@ -226,99 +219,118 @@ const Dashboard = () => {
 
             {/* Feed Items */}
             <div className="space-y-4">
-              {feed.map((item, index) => {
-                if ('title' in item) {
-                  return <JobCard key={`job-${item.id}`} job={item} variant="full" />;
-                }
-                return <SocialPostCard key={`post-${item.id}`} post={item} />;
-              })}
+              {feed.length === 0 ? (
+                <div className="bg-card rounded-xl border border-border p-12 text-center">
+                  <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                    {activeTab === 'jobs' ? (
+                      <Briefcase className="h-8 w-8 text-primary" />
+                    ) : (
+                      <Users className="h-8 w-8 text-primary" />
+                    )}
+                  </div>
+                  <h3 className="text-lg font-semibold mb-2">
+                    {activeTab === 'jobs' ? 'No jobs yet' : 'No posts yet'}
+                  </h3>
+                  <p className="text-muted-foreground mb-4">
+                    {activeTab === 'jobs' 
+                      ? 'Be the first to post a job opportunity!' 
+                      : 'Start sharing updates and connect with others!'}
+                  </p>
+                  <Link 
+                    to={activeTab === 'jobs' ? '/create/job' : '/create/post'} 
+                    className="btn btn-primary"
+                  >
+                    {activeTab === 'jobs' ? 'Post a Job' : 'Create Post'}
+                  </Link>
+                </div>
+              ) : (
+                feed.map((item, index) => {
+                  if ('title' in item) {
+                    return <JobCard key={`job-${item._id || index}`} job={item} variant="full" />;
+                  }
+                  return (
+                    <PostCard 
+                      key={`post-${item._id || index}`} 
+                      post={item}
+                      onDelete={() => setPosts(posts.filter(p => p._id !== item._id))}
+                      onUpdate={() => {
+                        // Refresh posts
+                        api.getPosts({ limit: 10, type: 'feed' }).then(res => {
+                          if (res.success && res.data) {
+                            setPosts(res.data.posts || []);
+                          }
+                        });
+                      }}
+                    />
+                  );
+                })
+              )}
             </div>
 
             {/* Load More */}
-            <div className="text-center py-8">
-              <button className="btn btn-outline btn-primary">
-                Load More
-              </button>
-            </div>
+            {feed.length > 0 && (
+              <div className="text-center py-8">
+                <button className="btn btn-outline btn-primary">
+                  Load More
+                </button>
+              </div>
+            )}
           </main>
 
           {/* Right Sidebar */}
           <aside className="hidden lg:block lg:col-span-3">
-            {/* AI Recommendations */}
-            <div className="bg-gradient-to-br from-primary/10 to-accent/10 rounded-xl border border-primary/20 p-4 mb-4">
-              <div className="flex items-center gap-2 mb-3">
-                <Sparkles className="h-5 w-5 text-primary" />
-                <h4 className="font-semibold">AI Job Match</h4>
+            {/* AI Recommendations - Hide until implemented */}
+            {false && (
+              <div className="bg-gradient-to-br from-primary/10 to-accent/10 rounded-xl border border-primary/20 p-4 mb-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <Sparkles className="h-5 w-5 text-primary" />
+                  <h4 className="font-semibold">AI Job Match</h4>
+                </div>
+                <p className="text-sm text-muted-foreground mb-3">
+                  Complete your profile to get AI-powered job recommendations
+                </p>
+                <Link to="/profile" className="btn btn-primary btn-sm w-full">
+                  Complete Profile
+                </Link>
               </div>
+            )}
+
+            {/* Welcome Card */}
+            <div className="bg-card rounded-xl border border-border p-4 mb-4">
+              <h4 className="font-semibold mb-2">Welcome to JOBFOLIO! 👋</h4>
               <p className="text-sm text-muted-foreground mb-3">
-                Based on your profile, we found 8 jobs with 90%+ match rate
+                Start exploring jobs and connecting with professionals across Africa
               </p>
-              <Link to="/jobs?ai=true" className="btn btn-primary btn-sm w-full">
-                View Matches
+              <Link to="/jobs" className="btn btn-primary btn-sm w-full">
+                Browse Jobs
               </Link>
             </div>
 
-            {/* Trending Jobs */}
-            <div className="bg-card rounded-xl border border-border p-4 mb-4">
-              <div className="flex items-center justify-between mb-3">
-                <h4 className="font-semibold">Trending Jobs</h4>
-                <Link to="/jobs" className="text-xs text-primary hover:underline">
-                  See all
-                </Link>
-              </div>
-              <div className="space-y-3">
-                {[
-                  { title: "Store Manager", count: "234 openings" },
-                  { title: "Waiter/Waitress", count: "189 openings" },
-                  { title: "Security Guard", count: "156 openings" },
-                  { title: "Cashier", count: "143 openings" },
-                ].map((job, i) => (
-                  <Link
-                    key={i}
-                    to={`/jobs?q=${job.title}`}
-                    className="flex items-center justify-between text-sm hover:text-primary transition-colors"
-                  >
-                    <span>{job.title}</span>
-                    <span className="text-xs text-muted-foreground">{job.count}</span>
-                  </Link>
-                ))}
-              </div>
-            </div>
-
-            {/* Suggested Connections */}
+            {/* Quick Actions */}
             <div className="bg-card rounded-xl border border-border p-4">
-              <div className="flex items-center justify-between mb-3">
-                <h4 className="font-semibold">People to Follow</h4>
-                <Link to="/network" className="text-xs text-primary hover:underline">
-                  See all
+              <h4 className="font-semibold mb-3">Quick Actions</h4>
+              <div className="space-y-2">
+                <Link 
+                  to="/profile" 
+                  className="flex items-center gap-2 text-sm p-2 rounded-lg hover:bg-muted transition-colors"
+                >
+                  <User className="h-4 w-4 text-primary" />
+                  <span>Complete your profile</span>
                 </Link>
-              </div>
-              <div className="space-y-3">
-                {[
-                  {
-                    name: "Sarah Johnson",
-                    role: "HR at Dangote",
-                    avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=50&h=50&fit=crop&crop=face",
-                  },
-                  {
-                    name: "Mike Adebayo",
-                    role: "Recruiter at MTN",
-                    avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=50&h=50&fit=crop&crop=face",
-                  },
-                ].map((person, i) => (
-                  <div key={i} className="flex items-center gap-3">
-                    <img
-                      src={person.avatar}
-                      alt={person.name}
-                      className="w-10 h-10 rounded-full object-cover"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{person.name}</p>
-                      <p className="text-xs text-muted-foreground truncate">{person.role}</p>
-                    </div>
-                    <button className="btn btn-outline btn-xs">Follow</button>
-                  </div>
-                ))}
+                <Link 
+                  to="/jobs" 
+                  className="flex items-center gap-2 text-sm p-2 rounded-lg hover:bg-muted transition-colors"
+                >
+                  <Briefcase className="h-4 w-4 text-primary" />
+                  <span>Browse all jobs</span>
+                </Link>
+                <Link 
+                  to="/network" 
+                  className="flex items-center gap-2 text-sm p-2 rounded-lg hover:bg-muted transition-colors"
+                >
+                  <Users className="h-4 w-4 text-primary" />
+                  <span>Grow your network</span>
+                </Link>
               </div>
             </div>
           </aside>

@@ -118,8 +118,17 @@ class ApiClient {
       const data = await response.json();
 
       if (!response.ok) {
+        // Log detailed error for debugging
+        console.error('API Error Response:', data);
+        
         // Provide user-friendly error messages
-        const errorMessage = data.message || 'Something went wrong. Please try again.';
+        let errorMessage = data.message || 'Something went wrong. Please try again.';
+        
+        // If there are validation errors, show them
+        if (data.errors && Array.isArray(data.errors)) {
+          errorMessage = data.errors.map((err: any) => err.msg || err.message).join(', ');
+        }
+        
         throw new Error(errorMessage);
       }
 
@@ -256,11 +265,41 @@ class ApiClient {
     return this.request(`/jobs/${id}`);
   }
 
+  async getJob(id: string): Promise<ApiResponse> {
+    return this.getJobById(id);
+  }
+
   async createJob(jobData: any): Promise<ApiResponse> {
     return this.request('/jobs', {
       method: 'POST',
       body: JSON.stringify(jobData),
     });
+  }
+
+  async applyToJob(jobId: string, applicationData?: any): Promise<ApiResponse> {
+    return this.request('/applications', {
+      method: 'POST',
+      body: JSON.stringify({
+        job: jobId,
+        ...applicationData
+      }),
+    });
+  }
+
+  async saveJob(jobId: string): Promise<ApiResponse> {
+    return this.request(`/jobs/${jobId}/save`, {
+      method: 'POST',
+    });
+  }
+
+  async unsaveJob(jobId: string): Promise<ApiResponse> {
+    return this.request(`/jobs/${jobId}/save`, {
+      method: 'DELETE',
+    });
+  }
+
+  async getSavedJobs(): Promise<ApiResponse> {
+    return this.request('/jobs/saved');
   }
 
   async updateJob(id: string, updates: any): Promise<ApiResponse> {
@@ -350,6 +389,27 @@ class ApiClient {
     return response.json();
   }
 
+  async uploadJobImage(formData: FormData): Promise<ApiResponse> {
+    const token = TokenManager.getToken();
+    
+    if (!token) {
+      return {
+        success: false,
+        message: 'Authentication required. Please log in again.'
+      };
+    }
+
+    const response = await fetch(`${this.baseURL}/upload/job-image`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: formData,
+    });
+
+    return response.json();
+  }
+
   async uploadCV(file: File): Promise<ApiResponse> {
     const formData = new FormData();
     formData.append('cv', file);
@@ -407,6 +467,12 @@ class ApiClient {
   async followUser(userId: string): Promise<ApiResponse> {
     return this.request(`/users/${userId}/follow`, {
       method: 'POST',
+    });
+  }
+
+  async unfollowUser(userId: string): Promise<ApiResponse> {
+    return this.request(`/users/${userId}/follow`, {
+      method: 'DELETE',
     });
   }
 
