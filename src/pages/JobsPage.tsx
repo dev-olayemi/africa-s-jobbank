@@ -89,8 +89,8 @@ const JobsPage = () => {
     <Layout>
       <div className="container mx-auto px-4">
         <div className="mb-6">
-          <h1 className="text-3xl font-bold mb-2">Find Jobs</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-2xl sm:text-3xl font-bold mb-2">Find Jobs</h1>
+          <p className="text-sm sm:text-base text-muted-foreground">
             Discover opportunities across Africa
           </p>
         </div>
@@ -137,10 +137,10 @@ const JobsPage = () => {
                 onClick={() => navigate(`/jobs/${job._id}`)}
                 className="bg-card rounded-xl border border-border hover:shadow-md transition-shadow cursor-pointer overflow-hidden"
               >
-                <div className="flex gap-4">
-                  {/* Job Image */}
+                <div className="flex flex-col sm:flex-row gap-4">
+                  {/* Job Image - Hidden on mobile for cleaner look */}
                   {job.media && job.media.length > 0 ? (
-                    <div className="w-48 h-48 flex-shrink-0">
+                    <div className="hidden sm:block sm:w-40 md:w-48 sm:h-40 md:h-48 flex-shrink-0">
                       <img 
                         src={job.media[0].url} 
                         alt={job.title}
@@ -148,29 +148,29 @@ const JobsPage = () => {
                       />
                     </div>
                   ) : job.companyLogo ? (
-                    <div className="w-48 h-48 flex-shrink-0 bg-base-200 flex items-center justify-center">
+                    <div className="hidden sm:flex sm:w-40 md:w-48 sm:h-40 md:h-48 flex-shrink-0 bg-muted items-center justify-center">
                       <img 
                         src={job.companyLogo} 
                         alt={job.companyName}
-                        className="w-32 h-32 object-contain"
+                        className="w-24 md:w-32 h-24 md:h-32 object-contain"
                       />
                     </div>
                   ) : (
-                    <div className="w-48 h-48 flex-shrink-0 bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
-                      <div className="text-6xl font-bold text-primary/40">
-                        {job.companyName[0]}
+                    <div className="hidden sm:flex sm:w-40 md:w-48 sm:h-40 md:h-48 flex-shrink-0 bg-gradient-to-br from-primary/20 to-secondary/20 items-center justify-center">
+                      <div className="text-4xl md:text-6xl font-bold text-primary/40">
+                        {job.companyName?.[0] || 'J'}
                       </div>
                     </div>
                   )}
 
                   {/* Job Content */}
-                  <div className="flex-1 p-6">
-                    <div className="flex justify-between items-start mb-4">
-                      <div className="flex-1">
-                        <h3 className="text-xl font-semibold mb-1">{job.title}</h3>
-                        <p className="text-muted-foreground">{job.companyName}</p>
+                  <div className="flex-1 p-4 sm:p-6">
+                    <div className="flex flex-col sm:flex-row justify-between items-start gap-3 mb-4">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-lg sm:text-xl font-semibold mb-1 truncate">{job.title}</h3>
+                        <p className="text-muted-foreground text-sm sm:text-base">{job.companyName}</p>
                       </div>
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 w-full sm:w-auto">
                         <button 
                           onClick={(e) => handleSaveJob(job._id, e)}
                           className={`btn btn-sm ${savedJobs.has(job._id) ? 'btn-primary' : 'btn-ghost'} btn-square`}
@@ -187,34 +187,38 @@ const JobsPage = () => {
                             e.stopPropagation();
                             navigate(`/jobs/${job._id}`);
                           }}
-                          className="btn btn-primary btn-sm"
+                          className="btn btn-primary btn-sm flex-1 sm:flex-none"
                         >
                           View Details
                         </button>
                       </div>
                     </div>
-                    <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+                    <div className="flex flex-wrap gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
                       <div className="flex items-center gap-1">
-                        <MapPin className="h-4 w-4" />
-                        {job.location?.city}, {job.location?.state}
+                        <MapPin className="h-3 w-3 sm:h-4 sm:w-4" />
+                        <span className="truncate max-w-[120px] sm:max-w-none">
+                          {job.location?.city}, {job.location?.state}
+                        </span>
                       </div>
                       <div className="flex items-center gap-1">
-                        <Briefcase className="h-4 w-4" />
+                        <Briefcase className="h-3 w-3 sm:h-4 sm:w-4" />
                         {job.type}
                       </div>
                       {job.salary && (
                         <div className="flex items-center gap-1">
-                          <DollarSign className="h-4 w-4" />
-                          {job.salary.currency} {job.salary.min?.toLocaleString()} - {job.salary.max?.toLocaleString()}
+                          <DollarSign className="h-3 w-3 sm:h-4 sm:w-4" />
+                          <span className="truncate">
+                            {job.salary.currency} {job.salary.min?.toLocaleString()} - {job.salary.max?.toLocaleString()}
+                          </span>
                         </div>
                       )}
                       <div className="flex items-center gap-1">
-                        <Clock className="h-4 w-4" />
+                        <Clock className="h-3 w-3 sm:h-4 sm:w-4" />
                         {formatTimeAgo(job.createdAt)}
                       </div>
                       {job.applications > 0 && (
                         <div className="flex items-center gap-1">
-                          <Users className="h-4 w-4" />
+                          <Users className="h-3 w-3 sm:h-4 sm:w-4" />
                           {job.applications} applicant{job.applications !== 1 ? 's' : ''}
                         </div>
                       )}
