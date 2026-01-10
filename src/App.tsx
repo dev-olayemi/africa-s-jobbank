@@ -21,6 +21,11 @@ import MessagesPage from "./pages/MessagesPage";
 import SettingsPage from "./pages/SettingsPage";
 import CreateJobPage from "./pages/CreateJobPage";
 import CreatePostPage from "./pages/CreatePostPage";
+import NotificationsPage from "./pages/NotificationsPage";
+import ApplicationsPage from "./pages/ApplicationsPage";
+import SubscribePage from "./pages/SubscribePage";
+import SearchPage from "./pages/SearchPage";
+import AboutPage from "./pages/AboutPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -45,9 +50,14 @@ const App = () => (
               <Route path="/jobs" element={<ProtectedRoute><JobsPage /></ProtectedRoute>} />
               <Route path="/jobs/:id" element={<ProtectedRoute><JobDetailPage /></ProtectedRoute>} />
               <Route path="/my-jobs" element={<ProtectedRoute><MyJobsPage /></ProtectedRoute>} />
+              <Route path="/applications" element={<ProtectedRoute><ApplicationsPage /></ProtectedRoute>} />
               <Route path="/network" element={<ProtectedRoute><NetworkPage /></ProtectedRoute>} />
               <Route path="/messages" element={<ProtectedRoute><MessagesPage /></ProtectedRoute>} />
+              <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
               <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
+              <Route path="/subscribe" element={<ProtectedRoute><SubscribePage /></ProtectedRoute>} />
+              <Route path="/search" element={<ProtectedRoute><SearchPage /></ProtectedRoute>} />
+              <Route path="/about" element={<AboutPage />} />
               <Route path="/create/job" element={<ProtectedRoute><CreateJobPage /></ProtectedRoute>} />
               <Route path="/create/post" element={<ProtectedRoute><CreatePostPage /></ProtectedRoute>} />
               <Route path="/create" element={<ProtectedRoute><CreatePostPage /></ProtectedRoute>} />
